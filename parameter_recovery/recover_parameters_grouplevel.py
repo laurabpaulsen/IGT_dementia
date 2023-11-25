@@ -1,5 +1,5 @@
 import stan
-from generate import simulate_ORL
+from generate import simulate_ORL_group
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,48 +79,12 @@ def test_parameter_recovery_grouplevel(n_subjects, model_spec, savepath_fig = No
         Path to save the df to. NOT IMPLEMENTED CORRECTLY, currently overwrites for each participant
     """
 
-    mu_a_rew = 0.3
-    mu_a_pun = 0.3
-    mu_K = 0.3
-    mu_omega_f = 0.3
-    mu_omega_p = 0.3
-
-    
-
-    for sub in range(n_subjects):
-        # generate parameters
-        a_rew = np.random.normal(mu_a_rew, 0.1)
-        a_pun = np.random.normal(mu_a_pun, 0.1)
-        K = np.random.normal(mu_K, 0.1)
-        omega_f = np.random.normal(mu_omega_f, 0.1)
-        omega_p = np.random.normal(mu_omega_p, 0.1)
-
-        if sub == 0:
-            # generate synthetic data
-            data = simulate_ORL(
-                a_rew = a_rew,
-                a_pun = a_pun,
-                K = K,
-                omega_f = omega_f, 
-                omega_p = omega_p,
-                theta = 1
-
-            )
-        else: 
-            data_tmp = simulate_ORL(
-                a_rew = a_rew,
-                a_pun = a_pun,
-                K = K,
-                omega_f = omega_f, 
-                omega_p = omega_p,
-                theta = 1
-            )
-
-            # extend the data with the new subject
-            for key in data_tmp.keys():
-                data[key].extend(data_tmp[key])
+    simulate_ORL_group(n_subjects=30)
 
 
+    data["N"] = n_subjects
+    data["Tsubj"] = data["T"]
+    data["T"] = 100
 
     # fit the model
     model = stan.build(model_spec, data = data)
