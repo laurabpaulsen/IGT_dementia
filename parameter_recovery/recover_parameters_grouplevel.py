@@ -63,45 +63,74 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
 
 
 
-def test_parameter_recovery_grouplevel(n_subjects, model_spec, savepath_fig = None, savepath_df = None):
+def test_parameter_recovery_grouplevel(n_groups, model_spec, savepath_fig = None, savepath_df = None):
     """
     Generate synthetic data and fit the model to it. Check how well the parameters are recovered by plotting median against the true parameters.
 
     Parameters
     ----------
-    n_subjects : int
-        Number of subjects in the group
+    n_groups : int
+        Number of groups to simulate.
     model_spec : str
         Stan model specification.
     savepath_fig : Path, optional
         Path to save the parameter recovery figure to, by default None
-    savepath_df : Path
-        Path to save the df to. NOT IMPLEMENTED CORRECTLY, currently overwrites for each participant
     """
 
-    simulate_ORL_group(n_subjects=30)
+    mu_a_rew_t = np.zeros(n_groups)
+    mu_a_pun_t = np.zeros(n_groups)
+    mu_K_t = np.zeros(n_groups)
+    mu_omega_f_t = np.zeros(n_groups)
+    mu_omega_p_t = np.zeros(n_groups)
+
+    mu_a_rew_e = np.zeros(n_groups)
+    mu_a_pun_e = np.zeros(n_groups)
+    mu_K_e = np.zeros(n_groups)
+    mu_omega_f_e = np.zeros(n_groups)
+    mu_omega_p_e = np.zeros(n_groups)
 
 
-    data["N"] = n_subjects
-    data["Tsubj"] = data["T"]
-    data["T"] = 100
 
-    # fit the model
-    model = stan.build(model_spec, data = data)
-    fit = model.sample(num_chains = 4, num_samples = 1000)
+    for group in range(n_groups):
+        mu_a_rew = np.random.uniform(0, 1)
+        mu_a_pun = np.random.uniform(0, 1)
+        mu_K = np.random.uniform(0, 1)
+        mu_omega_f = np.random.uniform(0, 1)
+        mu_omega_p = np.random.uniform(0, 1)
 
-    # get the estimated parameters
-    df = fit.to_frame()
-        
-    if savepath_df:
-        df.to_csv(savepath_df)
+        data = simulate_ORL_group(
+            n_subjects=30,
+            mu_a_rew = mu_a_rew,
+            mu_a_pun = mu_a_pun,
+            mu_K = mu_K,
+            mu_omega_f = mu_omega_f,
+            mu_omega_p = mu_omega_p,
+            )
 
-        # ADD THETA????
-    
+        # fit the model
+        model = stan.build(model_spec, data = data)
+        fit = model.sample(num_chains = 4, num_samples = 1000)
+
+        # get the estimated parameters
+        df = fit.to_frame()
+
+        mu_a_rew_e[group] = MPD(df["a_rew"])
+        mu_a_pun_e[group] = MPD(df["a_pun"])
+        mu_K_e[group] = MPD(df["K"])
+        mu_omega_f_e[group] = MPD(df["omega_f"])
+        mu_omega_p_e[group] = MPD(df["omega_p"])
+
+        # store the true parameters
+        mu_a_rew_t[group] = mu_a_rew
+        mu_a_pun_t[group] = mu_a_pun
+        mu_K_t[group] = mu_K
+        mu_omega_f_t[group] = mu_omega_f
+        mu_omega_p_t[group] = mu_omega_p
+
     # plot the recovery of the parameters
     plot_recoveries(
-        trues = [mu_a_rew, mu_a_pun, mu_K, mu_omega_f, mu_omega_p],
-        estimateds = [MPD(df["a_rew"]), MPD(df["a_pun"]), MPD(df["K"]), MPD(df["omega_f"]), MPD(df["omega_p"])],
+        trues = [mu_a_rew_t, mu_a_pun_t, mu_K_t, mu_omega_f_t, mu_omega_p_t],
+        estimateds = [mu_a_rew_e, mu_a_pun_e, mu_K_e, mu_omega_f_e, mu_omega_p_e],
         parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
         savepath = savepath_fig
     )
