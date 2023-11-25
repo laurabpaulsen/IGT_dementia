@@ -111,7 +111,8 @@ def simulate_ORL(
     """
 
     choices = np.zeros(n_trials)
-    outcome = np.zeros(n_trials)
+    outcomes = np.zeros(n_trials)
+    sign_out = np.zeros(n_trials)
 
     ev = np.zeros((n_trials, 4))
     perseverance = np.zeros((n_trials, 4))
@@ -128,20 +129,20 @@ def simulate_ORL(
 
     # initial choice
     choices[0] = np.random.choice(4, p=np.ones(4) / 4)
-    outcome[0] = payoff[0, int(choices[0])]
+    outcomes[0] = payoff[0, int(choices[0])]
 
 
     # looping over trials
     for t in range(1, n_trials):
         # get the sign of the reward on the previous trial
-        sign_reward = np.sign(outcome[t - 1])
+        sign_out[t] = np.sign(outcomes[t - 1])
 
         for d in range(4):
             if d != int(choices[t - 1]): # if the deck was not chosen
                 ev[t, d] = ev[t - 1, d] # expected value stays the same
                 perseverance[t, d] = perseverance[t - 1, d]/(1 + K) # perseverance decays
 
-                if sign_reward == 1:
+                if sign_out[t] == 1:
                     exp_freq[t, d] = exp_freq[t - 1, d] + a_rew * (-exp_freq[t - 1, d])
                 else:
                     exp_freq[t, d] = exp_freq[t - 1, d] + a_pun * (-exp_freq[t - 1, d])
@@ -150,11 +151,11 @@ def simulate_ORL(
             else: # if the deck was chosen
                 perseverance[t, d] = 1 / (1 + K) # perseverance resets
 
-                if sign_reward == 1: # if the reward was positive
-                    ev[t, d] = ev[t - 1, d] + a_rew * (outcome[t - 1] - ev[t - 1, d])
+                if sign_out[t] == 1: # if the reward was positive
+                    ev[t, d] = ev[t - 1, d] + a_rew * (outcomes[t - 1] - ev[t - 1, d])
                     exp_freq[t, d] = exp_freq[t - 1, d] + a_rew * (1 - exp_freq[t - 1, d])
                 else: # if the reward was negative
-                    ev[t, d] = ev[t - 1, d] + a_pun * (outcome[t - 1] - ev[t - 1, d])
+                    ev[t, d] = ev[t - 1, d] + a_pun * (outcomes[t - 1] - ev[t - 1, d])
                     exp_freq[t, d] = exp_freq[t - 1, d] + a_pun * (1 - exp_freq[t - 1, d])
 
             
@@ -167,11 +168,13 @@ def simulate_ORL(
 
         # choice
         choices[t] = np.random.choice(4, p=p[t])
-        outcome[t] = payoff[t, int(choices[t])]
+        outcomes[t] = payoff[t, int(choices[t])]
     
     data = {
-        "choices" : choices,
-        "outcome" : outcome,
+        "choice" : [int(choice) + 1 for choice in choices],
+        "outcome" : [int(outcome) + 1 for outcome in outcomes],
+        "T": int(n_trials),
+        "sign_out": sign_out
     }
 
     return data

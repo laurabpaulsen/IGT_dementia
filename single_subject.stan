@@ -11,46 +11,45 @@ transformed data {
   initV  = rep_vector(0.0, 4);
 }
 parameters {
-  real <lower=0, upper=1> Arew_pr;
-  real <lower=0, upper=1> Apun_pr;
+  real <lower=0, upper=1> a_rew;
+  real <lower=0, upper=1> a_pun;
   real K;
-  real betaF;
-  real betaP;
+  real omega_f;
+  real omega_p;
 }
 
 model {
   // individual parameters
-  Arew  ~ normal(0, 1.0);
-  Apun  ~ normal(0, 1.0);
+  a_rew  ~ normal(0, 1.0);
+  a_pun  ~ normal(0, 1.0);
   K     ~ normal(0, 1.0);
-  betaF ~ normal(0, 1.0);
-  betaP ~ normal(0, 1.0);
+  omega_f ~ normal(0, 1.0);
+  omega_p ~ normal(0, 1.0);
 
-  for (i in 1:N) {
-    // Define values
-    vector[4] ef;
-    vector[4] ev;
-    vector[4] PEfreq_fic;
-    vector[4] PEval_fic;
-    vector[4] pers;   // perseverance
-    vector[4] util;
+  // Define values
+  vector[4] ef;
+  vector[4] ev;
+  vector[4] PEfreq_fic;
+  vector[4] PEval_fic;
+  vector[4] pers;   // perseverance
+  vector[4] util;
 
-    real PEval;
-    real PEfreq;
-    real efChosen;
-    real evChosen;
-    real K_tr;
+  real PEval;
+  real PEfreq;
+  real efChosen;
+  real evChosen;
+  real K_tr;
 
-    // Initialize values
-    ef    = initV;
-    ev    = initV;
-    pers  = initV; // initial pers values
-    util  = initV;
-    K_tr = pow(3, K[i]) - 1;
+  // Initialize values
+  ef    = initV;
+  ev    = initV;
+  pers  = initV; // initial pers values
+  util  = initV;
+  K_tr = pow(3, K) - 1;
 
-    for (t in 1:T) {
+  for (t in 1:T) {
       // softmax choice
-      choice[i, t] ~ categorical_logit( util );
+      choice[t] ~ categorical_logit( util );
 
       // Prediction error
       PEval  = outcome[t] - ev[ choice[t]];
@@ -58,21 +57,21 @@ model {
       PEfreq_fic = -sign_out[t]/3 - ef;
 
       // store chosen deck ev
-      efChosen = ef[ choice[i,t]];
-      evChosen = ev[ choice[i,t]];
+      efChosen = ef[ choice[t]];
+      evChosen = ev[ choice[t]];
 
-      if (outcome[i,t] >= 0) {
+      if (outcome[t] >= 0) {
         // Update ev for all decks
-        ef += Apun[i] * PEfreq_fic;
+        ef += a_pun * PEfreq_fic;
         // Update chosendeck with stored value
-        ef[ choice[t]] = efChosen + Arew * PEfreq;
-        ev[ choice[t]] = evChosen + Arew * PEval;
+        ef[ choice[t]] = efChosen + a_rew * PEfreq;
+        ev[ choice[t]] = evChosen + a_rew * PEval;
       } else {
         // Update ev for all decks
-        ef += Arew[i] * PEfreq_fic;
+        ef += a_rew * PEfreq_fic;
         // Update chosendeck with stored value
-        ef[choice[t]] = efChosen + Apun * PEfreq;
-        ev[choice[t]] = evChosen + Apun * PEval;
+        ef[choice[t]] = efChosen + a_pun * PEfreq;
+        ev[choice[t]] = evChosen + a_pun * PEval;
       }
 
       // Perseverance updating
@@ -80,7 +79,7 @@ model {
       pers /= (1 + K_tr);        // decay
 
       // Utility of expected value and perseverance
-      util  = ev + ef * betaF + pers * betaP;
+      util  = ev + ef * omega_f + pers * omega_p;
     }
-  }
 }
+
