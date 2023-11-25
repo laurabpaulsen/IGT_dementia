@@ -69,6 +69,76 @@ def create_payoff_structure(
 
     return payoff
 
+def simulate_ORL_group(
+        n_subjects : int = 10,
+        n_trials : int = 100,
+        mu_a_rew : float = 0.3,
+        mu_a_pun : float = 0.3,
+        mu_K : float = 0.3,
+        mu_omega_f : float = 0.7,
+        mu_omega_p : float = 0.7
+        ):
+    """
+    Simulates behavioural data using the payoff structure and the ORL model given a group level mean
+    for the parameters.
+
+    Parameters
+    ----------
+    n_subjects : int
+        Number of subjects in the group
+    n_trials : int
+        Total number of trials in our payoff structure. Must be divisible by 10.
+    mu_a_rew : float
+        Group level mean for the learning rate for rewards.
+    mu_a_pun : float
+        Group level mean for the learning rate for punishments.
+    mu_K : float
+        Group level mean for the perseverance parameter.
+    mu_omega_f : float
+        Group level mean for the weighting parameter for expected frequencies.
+    mu_omega_p : float
+        Group level mean for the weighting parameter for perseveration.
+    
+    Returns
+    -------
+    data : dict
+        A dictionary containing the simulated data.
+    """
+
+    choices = np.zeros((n_subjects, n_trials))
+    outcomes = np.zeros((n_subjects, n_trials))
+    sign_out = np.zeros((n_subjects, n_trials))
+    Tsubj = np.zeros(n_subjects))
+
+
+    for sub in range(n_subjects):
+        # generate parameters
+        a_rew = np.random.normal(mu_a_rew, 0.1)
+        a_pun = np.random.normal(mu_a_pun, 0.1)
+        K = np.random.normal(mu_K, 0.1)
+        omega_f = np.random.normal(mu_omega_f, 0.1)
+        omega_p = np.random.normal(mu_omega_p, 0.1)
+
+        # simulate data
+        payoff = create_payoff_structure(n_trials=n_trials)
+
+        sub_data = simulate_ORL(payoff, n_trials, a_rew, a_pun, K, omega_f, omega_p)
+
+        choices[sub] = sub_data["choice"]
+        outcomes[sub] = sub_data["outcome"]
+        sign_out[sub] = sub_data["sign_out"]
+        Tsubj[sub] = sub_data["T"]
+
+    return {
+        "choice" : choices,
+        "outcome" : outcomes,
+        "Tsubj" : Tsubj,
+        "sign_out" : sign_out,
+        "T": int(n_trials)
+    }
+
+
+
 
 def simulate_ORL(
         payoff : np.ndarray = create_payoff_structure(), 
