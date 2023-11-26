@@ -231,7 +231,11 @@ def simulate_ORL(
         # softmax
         exp_p[t] = np.exp(theta * valence[t])
         p[t] = exp_p[t] / np.sum(exp_p[t])
+        print(p[t])
 
+        # check if any numbers are NaN
+        if np.isnan(p[t]).any():
+            raise ValueError("p[t] contains NaNs")
         # choice
         choices[t] = np.random.choice(4, p=p[t])
         outcomes[t] = payoff[t, int(choices[t])]
