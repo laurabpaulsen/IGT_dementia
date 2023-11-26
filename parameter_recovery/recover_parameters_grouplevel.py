@@ -78,6 +78,7 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
     mu_omega_f_e, sigma_omega_f_e = np.zeros(n_groups), np.zeros(n_groups)
     mu_omega_p_e, sigma_omega_p_e = np.zeros(n_groups), np.zeros(n_groups)
 
+    super_df = pd.DataFrame()
 
 
     for group in range(n_groups):
@@ -115,6 +116,12 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
         # get the estimated parameters
         df = fit.to_frame()
 
+        # add the group number
+        df["group"] = group
+
+        # save the data
+        super_df = pd.concat([super_df, df])
+
         mu_a_rew_e[group] = df["mu_a_rew"].median()
         mu_a_pun_e[group] = df["mu_a_pun"].median()
         mu_K_e[group] = df["mu_K"].median()
@@ -128,6 +135,10 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
         parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
         savepath = savepath_fig / "hierachical_parameter_recovery_ORL.png"
     )
+
+    # save the data
+    if savepath_df:
+        super_df.to_csv(savepath_df, index = False)
 
 
 
@@ -144,9 +155,9 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     test_parameter_recovery_grouplevel(
-        n_groups = ,
-        n_subjects = 20,
+        n_groups = 1,
+        n_subjects = 1,
         model_spec = model_spec,
         savepath_fig = path / "fig"
-        #savepath_df = path / "hierachical_parameter_recovery_ORL.csv"
+        savepath_df = path / "hierachical_parameter_recovery_ORL.csv"
     )
