@@ -6,17 +6,6 @@ import numpy as np
 import pandas as pd
 
 
-def MPD(x: pd.Series):
-    """
-    Modified from Andreas' R code.
-    
-    # defining a function for calculating the maximum of the posterior density (not exactly the same as the mode)
-    MPD <- function(x) {
-    density(x)$x[which(density(x)$y==max(density(x)$y))]
-    }
-    """
-    density = x.plot.density()
-    return density.x[np.argmax(density.y)]
 
 def plot_recovery_ax(ax, true, estimated, parameter_name):
     """
@@ -63,7 +52,7 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
 
 
 
-def test_parameter_recovery_grouplevel(n_groups, model_spec, savepath_fig = None, savepath_df = None):
+def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepath_fig = None, savepath_df = None):
     """
     Generate synthetic data and fit the model to it. Check how well the parameters are recovered by plotting median against the true parameters.
 
@@ -94,12 +83,12 @@ def test_parameter_recovery_grouplevel(n_groups, model_spec, savepath_fig = None
     for group in range(n_groups):
         mu_a_rew = np.random.uniform(0, 1)
         mu_a_pun = np.random.uniform(0, 1)
-        mu_K = np.random.uniform(0, 1)
-        mu_omega_f = np.random.uniform(0, 1)
-        mu_omega_p = np.random.uniform(0, 1)
+        mu_K = np.random.uniform(0, 2)
+        mu_omega_f = np.random.uniform(0, 2)
+        mu_omega_p = np.random.uniform(0, 2)
 
         data = simulate_ORL_group(
-            n_subjects=30,
+            n_subjects = n_subjects,
             mu_a_rew = mu_a_rew,
             mu_a_pun = mu_a_pun,
             mu_K = mu_K,
@@ -114,11 +103,11 @@ def test_parameter_recovery_grouplevel(n_groups, model_spec, savepath_fig = None
         # get the estimated parameters
         df = fit.to_frame()
 
-        mu_a_rew_e[group] = MPD(df["a_rew"])
-        mu_a_pun_e[group] = MPD(df["a_pun"])
-        mu_K_e[group] = MPD(df["K"])
-        mu_omega_f_e[group] = MPD(df["omega_f"])
-        mu_omega_p_e[group] = MPD(df["omega_p"])
+        mu_a_rew_e[group] = df["mu_a_rew"].median()
+        mu_a_pun_e[group] = df["mu_a_pun"].median()
+        mu_K_e[group] = df["mu_K"].median()
+        mu_omega_f_e[group] = df["mu_omega_f"].median()
+        mu_omega_p_e[group] = df["mu_omega_p"].median()
 
         # store the true parameters
         mu_a_rew_t[group] = mu_a_rew
@@ -131,7 +120,7 @@ def test_parameter_recovery_grouplevel(n_groups, model_spec, savepath_fig = None
     plot_recoveries(
         trues = [mu_a_rew_t, mu_a_pun_t, mu_K_t, mu_omega_f_t, mu_omega_p_t],
         estimateds = [mu_a_rew_e, mu_a_pun_e, mu_K_e, mu_omega_f_e, mu_omega_p_e],
-        parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
+        parameter_names = ["mu_a_pun", "mu_a_rew", "mu_K", "mu_omega_f", "mu_omega_p"],
         savepath = savepath_fig
     )
 
@@ -148,6 +137,7 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     test_parameter_recovery_grouplevel(
+        n_groups = 50,
         n_subjects = 30,
         model_spec = model_spec,
         savepath_fig = path / "fig" / "hierachical_parameter_recovery_ORL.png",

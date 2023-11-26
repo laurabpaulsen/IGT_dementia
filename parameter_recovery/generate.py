@@ -108,7 +108,7 @@ def simulate_ORL_group(
     choices = np.zeros((n_subjects, n_trials))
     outcomes = np.zeros((n_subjects, n_trials))
     sign_out = np.zeros((n_subjects, n_trials))
-    Tsubj = np.zeros(n_subjects))
+    Tsubj = np.zeros(n_subjects)
 
 
     for sub in range(n_subjects):
@@ -130,11 +130,12 @@ def simulate_ORL_group(
         Tsubj[sub] = sub_data["T"]
 
     return {
-        "choice" : choices,
+        "choice" : choices.astype(int),
         "outcome" : outcomes,
-        "Tsubj" : Tsubj,
+        "Tsubj" : Tsubj.astype(int),
         "sign_out" : sign_out,
-        "T": int(n_trials)
+        "T": int(n_trials),
+        "N": int(n_subjects)
     }
 
 
