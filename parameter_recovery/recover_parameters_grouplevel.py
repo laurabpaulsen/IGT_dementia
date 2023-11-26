@@ -96,11 +96,16 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
 
         data = simulate_ORL_group(
             n_subjects = n_subjects,
-            mu_a_rew = mu_a_rew,
-            mu_a_pun = mu_a_pun,
-            mu_K = mu_K,
-            mu_omega_f = mu_omega_f,
-            mu_omega_p = mu_omega_p,
+            mu_a_rew = mu_a_rew_t[group],
+            mu_a_pun = mu_a_pun_t[group],
+            mu_K = mu_K_t[group],
+            mu_omega_f = mu_omega_f_t[group],
+            mu_omega_p = mu_omega_p_t[group],
+            sigma_a_rew = sigma_a_rew_t[group],
+            sigma_a_pun = sigma_a_pun_t[group],
+            sigma_K = sigma_K_t[group],
+            sigma_omega_f = sigma_omega_f_t[group],
+            sigma_omega_p = sigma_omega_p_t[group]
             )
 
         # fit the model
@@ -116,12 +121,12 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
         mu_omega_f_e[group] = df["mu_omega_f"].median()
         mu_omega_p_e[group] = df["mu_omega_p"].median()
 
-        sigma_a_rew_e[group] = MPD(df["sigma_a_rew"])
-        sigma_a_pun_e[group] = MPD(df["sigma_a_pun"])
-        sigma_K_e[group] = MPD(df["sigma_K"])
-        sigma_omega_f_e[group] = MPD(df["sigma_omega_f"])
-        sigma_omega_p_e[group] = MPD(df["sigma_omega_p"])
-
+        sigma_a_rew_e[group] = df["sigma_a_rew"].median()
+        sigma_a_pun_e[group] = df["sigma_a_pun"].median()
+        sigma_K_e[group] = df["sigma_K"].median()
+        sigma_omega_f_e[group] = df["sigma_omega_f"].median()
+        sigma_omega_p_e[group] = df["sigma_omega_p"].median()
+    
     # plot the recovery of the parameters
     plot_recoveries(
         trues = [mu_a_rew_t, mu_a_pun_t, mu_K_t, mu_omega_f_t, mu_omega_p_t],
