@@ -120,27 +120,16 @@ def test_parameter_recovery_grouplevel(n_groups, n_subjects, model_spec, savepat
         mu_K_e[group] = df["mu_K"].median()
         mu_omega_f_e[group] = df["mu_omega_f"].median()
         mu_omega_p_e[group] = df["mu_omega_p"].median()
-
-        sigma_a_rew_e[group] = df["sigma_a_rew"].median()
-        sigma_a_pun_e[group] = df["sigma_a_pun"].median()
-        sigma_K_e[group] = df["sigma_K"].median()
-        sigma_omega_f_e[group] = df["sigma_omega_f"].median()
-        sigma_omega_p_e[group] = df["sigma_omega_p"].median()
     
     # plot the recovery of the parameters
     plot_recoveries(
         trues = [mu_a_rew_t, mu_a_pun_t, mu_K_t, mu_omega_f_t, mu_omega_p_t],
         estimateds = [mu_a_rew_e, mu_a_pun_e, mu_K_e, mu_omega_f_e, mu_omega_p_e],
         parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
-        savepath = savepath_fig / "hierachical_parameter_recovery_ORL_means.png"
+        savepath = savepath_fig / "hierachical_parameter_recovery_ORL.png"
     )
 
-    plot_recoveries(
-        trues = [sigma_a_rew_t, sigma_a_pun_t, sigma_K_t, sigma_omega_f_t, sigma_omega_p_t],
-        estimateds = [sigma_a_rew_e, sigma_a_pun_e, sigma_K_e, sigma_omega_f_e, sigma_omega_p_e],
-        parameter_names = ["sigma_a_pun", "sigma_a_rew", "sigma_K", "sigma_omega_f", "sigma_omega_p"],
-        savepath = savepath_fig / "hierachical_parameter_recovery_ORL_sigmas.png"
-    )
+
 
 
 if __name__ == "__main__":
@@ -155,7 +144,7 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     test_parameter_recovery_grouplevel(
-        n_groups = 1,
+        n_groups = ,
         n_subjects = 20,
         model_spec = model_spec,
         savepath_fig = path / "fig"
