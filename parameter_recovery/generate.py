@@ -233,9 +233,10 @@ def simulate_ORL(
         p[t] = exp_p[t] / np.sum(exp_p[t])
         print(p[t])
 
-        # check if any numbers are NaN
+        # check if any numbers are NaN, if they are, set them to 0 but only for the nan values
         if np.isnan(p[t]).any():
-            raise ValueError("p[t] contains NaNs")
+            p[t][np.isnan(p[t])] = 0
+            
         # choice
         choices[t] = np.random.choice(4, p=p[t])
         outcomes[t] = payoff[t, int(choices[t])]
