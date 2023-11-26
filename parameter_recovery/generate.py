@@ -231,11 +231,11 @@ def simulate_ORL(
         # softmax
         exp_p[t] = np.exp(theta * valence[t])
         p[t] = exp_p[t] / np.sum(exp_p[t])
-        print(p[t])
 
         # check if any numbers are NaN, if they are, set them to 0 but only for the nan values
         if np.isnan(p[t]).any():
             p[t][np.isnan(p[t])] = 0
+            print("NaNs set to 0")
             
         # choice
         choices[t] = np.random.choice(4, p=p[t])
@@ -251,61 +251,10 @@ def simulate_ORL(
     return data
         
 
-
-
-
-
-
 if __name__ in "__main__":
     payoff = create_payoff_structure()
     data = simulate_ORL(payoff)
-    print(data)
     
-
-
-
-"""
-ORL <- function(payoff,ntrials,a_rew,a_pun,K,theta,omega_f,omega_p) {
-  
-  for (t in 2:ntrials) {
-    
-    #this is important mention this as constructing model
-    signX[t] <- ifelse(X[t-1]<0,-1,1)
-    
-    for (d in 1:4) {
-      
-      #-----------Valence model------------------------------
-      valence[t,d] <- ev[t,d] + Ef[t,d]*omega_f + PS[t,d]*omega_p
-      
-      #----------softmax part 1-------------
-      exp_p[t,d] <- exp(theta*valence[t,d])
-      
-    }
-    
-    #----------softmax part 2-------------
-    for (d in 1:4) {
-      p[t,d] <- exp_p[t,d]/sum(exp_p[t,])
-    }
-      
-    x[t] <- rcat(1,p[t,])
-    
-    X[t] <- payoff[t,x[t]]
-    
-  }
-  
-  result <- list(x=x,
-                 X=X,
-                 Ev=Ev,
-                 Ef=Ef,
-                 PS=PS)
-  
-  return(result)
-  
-  
-}
-
-"""
-
 
 
 
