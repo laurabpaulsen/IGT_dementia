@@ -73,6 +73,7 @@ def create_payoff_structure(
 
     return payoff
 
+
 def simulate_ORL_group(
         n_subjects : int = 10,
         n_trials : int = 100,
@@ -104,15 +105,9 @@ def simulate_ORL_group(
         A dictionary containing the simulated data.
     """
 
-    choices = np.zeros((n_subjects, n_trials))
-    outcomes = np.zeros((n_subjects, n_trials))
-    sign_out = np.zeros((n_subjects, n_trials))
-    sub_a_rew = np.zeros(n_subjects)
-    sub_a_pun = np.zeros(n_subjects)
-    sub_K = np.zeros(n_subjects)
-    sub_omega_f = np.zeros(n_subjects)
-    sub_omega_p = np.zeros(n_subjects)
-
+    choices, outcomes, sign_out = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
+    sub_a_rew, sub_a_pun, sub_K = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
+    sub_omega_f, sub_omega_p = np.zeros(n_subjects), np.zeros(n_subjects)
 
 
     for sub in range(n_subjects):
@@ -152,20 +147,17 @@ def simulate_ORL_group(
         "choice": choices.astype(int),
         "outcome": outcomes,
         "sign_out": sign_out,
-        "sub": [sub + 1 for sub in range(n_subjects) for _ in range(n_trials)],
-        "sub_a_rew": [sub_a_rew[sub] for sub in range(n_subjects) for _ in range(n_trials)],
-        "sub_a_pun": [sub_a_pun[sub] for sub in range(n_subjects) for _ in range(n_trials)],
-        "sub_K": [sub_K[sub] for sub in range(n_subjects) for _ in range(n_trials)],
-        "sub_omega_f": [sub_omega_f[sub] for sub in range(n_subjects) for _ in range(n_trials)],
-        "sub_omega_p": [sub_omega_p[sub] for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub": np.repeat(np.arange(1, n_subjects + 1), n_trials),
+        "sub_a_rew": np.repeat(sub_a_rew, n_trials),
+        "sub_a_pun": np.repeat(sub_a_pun, n_trials),
+        "sub_K": np.repeat(sub_K, n_trials),
+        "sub_omega_f": np.repeat(sub_omega_f, n_trials),
+        "sub_omega_p": np.repeat(sub_omega_p, n_trials)
     }
 
-
-    # prep for dataframe conversion
-    data["choice"] = data["choice"].flatten()
-    data["outcome"] = data["outcome"].flatten()
-    data["sign_out"] = data["sign_out"].flatten()
-
+    # flatten the two dimensional arrays
+    for var in ["choice", "outcome", "sign_out"]:
+        data[var] = data[var].flatten()
 
     # make into a dataframe
     df = pd.DataFrame.from_dict(data)
@@ -268,11 +260,6 @@ def simulate_ORL(
         # softmax
         exp_p[t] = np.exp(theta * valence[t])
         p[t] = exp_p[t] / np.sum(exp_p[t])
-
-        # check if any numbers are NaN, if they are, set them to 0 but only for the nan values
-        if np.isnan(p[t]).any():
-            p[t][np.isnan(p[t])] = 0
-            print("NaNs set to 0")
             
         # choice
         choices[t] = np.random.choice(4, p=p[t])
@@ -287,6 +274,7 @@ def simulate_ORL(
 
     return data
         
+
 
 if __name__ in "__main__":
     path = Path(__file__).parent
