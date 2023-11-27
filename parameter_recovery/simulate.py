@@ -1,7 +1,11 @@
 """
 This scipt holds the functions for generating the data for the parameter recovery analysis.
+
+If the script is run directly, it will generate the data and save it to a csv file.
 """
 import numpy as np
+import pandas as pd
+from pathlib import Path
 
 def create_payoff_structure(
         n_trials : int = 100, 
@@ -103,16 +107,37 @@ def simulate_ORL_group(
     choices = np.zeros((n_subjects, n_trials))
     outcomes = np.zeros((n_subjects, n_trials))
     sign_out = np.zeros((n_subjects, n_trials))
-    Tsubj = np.zeros(n_subjects)
+    sub_a_rew = np.zeros(n_subjects)
+    sub_a_pun = np.zeros(n_subjects)
+    sub_K = np.zeros(n_subjects)
+    sub_omega_f = np.zeros(n_subjects)
+    sub_omega_p = np.zeros(n_subjects)
+
 
 
     for sub in range(n_subjects):
         # generate parameters
         a_rew = np.random.normal(mu_a_rew, sigma_a_rew)
         a_pun = np.random.normal(mu_a_pun, sigma_a_pun)
+
+        # check that parameters are between 0 and 1
+        while a_rew < 0 or a_rew > 1:
+            a_rew = np.random.normal(mu_a_rew, sigma_a_rew)
+        while a_pun < 0 or a_pun > 1:
+            a_pun = np.random.normal(mu_a_pun, sigma_a_pun)
+        
+
         K = np.random.normal(mu_K, sigma_K)
         omega_f = np.random.normal(mu_omega_f, sigma_omega_f)
         omega_p = np.random.normal(mu_omega_p, sigma_omega_p)
+
+        # check that the parameters are < 0
+        while K < 0:
+            K = np.random.normal(mu_K, sigma_K)
+        while omega_f < 0:
+            omega_f = np.random.normal(mu_omega_f, sigma_omega_f)
+        while omega_p < 0:
+            omega_p = np.random.normal(mu_omega_p, sigma_omega_p)
 
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
@@ -122,18 +147,30 @@ def simulate_ORL_group(
         choices[sub] = sub_data["choice"]
         outcomes[sub] = sub_data["outcome"]
         sign_out[sub] = sub_data["sign_out"]
-        Tsubj[sub] = sub_data["T"]
 
-    return {
+    data = {
         "choice" : choices.astype(int),
         "outcome" : outcomes,
-        "Tsubj" : Tsubj.astype(int),
         "sign_out" : sign_out,
-        "T": int(n_trials),
-        "N": int(n_subjects)
+        "sub" : [sub + 1 for sub in range(n_subjects) for i in range(n_trials)],
+        "sub_a_rew" : [sub_a_rew[sub] for sub in range(n_subjects) for i in range(n_trials)],
+        "sub_a_pun" : [sub_a_pun[sub] for sub in range(n_subjects) for i in range(n_trials)],
+        "sub_K" : [sub_K[sub] for sub in range(n_subjects) for i in range(n_trials)],
+        "sub_omega_f" : [sub_omega_f[sub] for sub in range(n_subjects) for i in range(n_trials)],
+        "sub_omega_p" : [sub_omega_p[sub] for sub in range(n_subjects) for i in range(n_trials)]
     }
 
+    # prep for dataframe conversion
+    data["choice"] = data["choice"].flatten()
+    data["outcome"] = data["outcome"].flatten()
+    data["sign_out"] = data["sign_out"].flatten()
 
+
+
+    # make into a dataframe
+    df = pd.DataFrame.from_dict(data)
+
+    return df
 
 
 def simulate_ORL(
@@ -252,8 +289,57 @@ def simulate_ORL(
         
 
 if __name__ in "__main__":
-    payoff = create_payoff_structure()
-    data = simulate_ORL(payoff)
+    path = Path(__file__).parent
+
+    # output path for simulated data
+    output_path = path / "simulated"
+
+    # create output path if it doesn't exist
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    df = pd.DataFrame()
+    
+    n_groups = 10 
+    n_subjects = 20
+
+    for group in range(n_groups):
+        mu_a_rew = np.random.uniform(0, 1)
+        mu_a_pun = np.random.uniform(0, 1)
+
+
+        mu_K = np.random.uniform(0, 10)
+
+        mu_omega_f = np.random.uniform(0, 5)
+        mu_omega_p = np.random.uniform(0, 5)
+
+
+        data = simulate_ORL_group(
+            n_subjects = n_subjects,
+            mu_a_rew = mu_a_rew,
+            mu_a_pun = mu_a_pun,
+            mu_K = mu_K,
+            mu_omega_f = mu_omega_f,
+            mu_omega_p = mu_omega_p,
+            sigma_a_rew = 0.001,
+            sigma_a_pun = 0.001,
+            sigma_K = 0.001,
+            sigma_omega_f = 0.001,
+            sigma_omega_p = 0.001
+            )
+    
+        tmp_df = pd.DataFrame.from_dict(data)
+        tmp_df["group"] = group + 1
+        tmp_df["mu_a_rew"] = mu_a_rew
+        tmp_df["mu_a_pun"] = mu_a_pun
+        tmp_df["mu_K"] = mu_K
+        tmp_df["mu_omega_f"] = mu_omega_f
+        tmp_df["mu_omega_p"] = mu_omega_p
+
+        df = pd.concat([df, tmp_df])
+
+    df.to_csv(output_path / f"ORL_simulated_{n_groups}_groups_{n_subjects}_sub.csv", index=False)
+
+
     
 
 
@@ -261,141 +347,3 @@ if __name__ in "__main__":
 
 
 
-
-
-
-"""
-
-#-------test ORL delta function and jags script ---------
-
-#---set params
-
-a_rew <- .3
-a_pun <- .3
-K <- 2
-theta <- 2
-omega_f <- .7
-omega_p <- .7
-
-# ntrials <- 100
-
-source("ORL.R")
-ORL_sims <- ORL(payoff,ntrials,a_rew,a_pun,K,theta,omega_f,omega_p)
-
-par(mfrow=c(2,2))
-plot(ORL_sims$ev[,1])
-plot(ORL_sims$ev[,2])
-plot(ORL_sims$ev[,3])
-plot(ORL_sims$ev[,4])
-
-x <- ORL_sims$x
-X <- ORL_sims$X
-
-# set up jags and run jags model
-data <- list("x","X","ntrials") 
-params<-c("a_rew","a_pun","K","theta","omega_f","omega_p")
-samples <- jags.parallel(data, inits=NULL, params,
-                model.file ="ORL.txt", n.chains=3, 
-                n.iter=5000, n.burnin=1000, n.thin=1, n.cluster=3)
-
-
-###--------------Run full parameter recovery -------------
-niterations <- 100 # fewer because it takes too long
-
-true_a_rew <- array(NA,c(niterations))
-true_a_pun <- array(NA,c(niterations))
-true_K <- array(NA,c(niterations))
-true_theta <- array(NA,c(niterations))
-true_omega_f <- array(NA,c(niterations))
-true_omega_p <- array(NA,c(niterations))
-
-infer_a_rew <- array(NA,c(niterations))
-infer_a_pun <- array(NA,c(niterations))
-infer_K <- array(NA,c(niterations))
-infer_theta <- array(NA,c(niterations))
-infer_omega_f <- array(NA,c(niterations))
-infer_omega_p <- array(NA,c(niterations))
-
-start_time = Sys.time()
-
-for (i in 1:niterations) {
-  
-  # let's see how robust the model is. Does it recover all sorts of values?
-  a_rew <- runif(1,0,1)
-  a_pun <- runif(1,0,1)
-  K <- runif(1,0,2)
-  theta <- runif(1,.2,3) # could also just be a set value (e.g. 1) to simplify the model a bit
-  omega_f <- runif(1,-2,2)
-  omega_p <- runif(1,-2,2)
-  
-  ORL_sims <- ORL(payoff,ntrials,a_rew,a_pun,K,theta,omega_f,omega_p)
-  
-  x <- ORL_sims$x
-  X <- ORL_sims$X
-  
-  # set up jags and run jags model
-  data <- list("x","X","ntrials") 
-  params<-c("a_rew","a_pun","K","theta","omega_f","omega_p")
-  samples <- jags.parallel(data, inits=NULL, params,
-                  model.file ="ORL.txt", n.chains=3, 
-                  n.iter=3000, n.burnin=1000, n.thin=1, n.cluster=3)
-  
-  
-  true_a_rew[i] <- a_rew
-  true_a_pun[i] <- a_pun
-  true_K[i] <- K
-  true_theta[i] <- theta
-  true_omega_f[i] <- omega_f
-  true_omega_p[i] <- omega_p
-  
-  # find maximum a posteriori
-  Y <- samples$BUGSoutput$sims.list
-  infer_a_rew[i] <- MPD(Y$a_rew)
-  infer_a_pun[i] <- MPD(Y$a_pun)
-  infer_K[i] <- MPD(Y$K)
-  infer_theta[i] <- MPD(Y$theta)
-  infer_omega_f[i] <- MPD(Y$omega_f)
-  infer_omega_p[i] <- MPD(Y$omega_p)
-
-  print(i)
-  
-}
-
-end_time = Sys.time()
-end_time - start_time
-
-# let's look at some scatter plots
-
-par(mfrow=c(3,2))
-plot(true_a_rew,infer_a_rew)
-plot(true_a_pun,infer_a_pun)
-plot(true_K,infer_K)
-plot(true_theta,infer_theta)
-plot(true_omega_f,infer_omega_f)
-plot(true_omega_p,infer_omega_p)
-
-# plotting code courtesy of Lasse
-source('recov_plot.R')
-pl1 <- recov_plot(true_a_rew, infer_a_rew, c("true a_rew", "infer a_rew"), 'smoothed linear fit')
-pl2 <- recov_plot(true_a_pun, infer_a_pun, c("true a_pun", "infer a_pun"), 'smoothed linear fit')
-pl3 <- recov_plot(true_K, infer_K, c("true K", "infer K"), 'smoothed linear fit')
-pl4 <- recov_plot(true_theta, infer_theta, c("true theta", "infer theta"), 'smoothed linear fit')
-pl5 <- recov_plot(true_omega_f, infer_omega_f, c("true omega_f", "infer omega_f"), 'smoothed linear fit')
-pl6 <- recov_plot(true_omega_p, infer_omega_p, c("true omega_p", "infer omega_p"), 'smoothed linear fit')
-ggarrange(pl1, pl2, pl3, pl4, pl5, pl6)
-
-# for investigating multi-colinearity
-
-# par(mfrow=c(2,2))
-# plot(true_a_rew,true_a_pun)
-# plot(infer_a_rew,infer_a_pun)
-# plot(true_omega_f,true_omega_p)
-# plot(infer_omega_f,infer_omega_p)
-# 
-# par(mfrow=c(2,2))
-# plot(true_a_rew,true_omega_f)
-# plot(infer_a_rew,infer_omega_f)
-# plot(true_a_rew,true_omega_p)
-# plot(infer_a_rew,infer_omega_p)
-
-"""
