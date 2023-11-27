@@ -63,11 +63,11 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load in the simulated data
-    filename = "simulated_ORL_2_groups_3_sub.csv"
+    filename = "ORL_simulated_2_groups_3_sub.csv"
     data = pd.read_csv(path / "simulated" / filename)
 
     recover_group_level(
         data = data,
         model_spec = model_spec,
-        savepath_df = outpath / f"param_rec_{filename}"
+        savepath = outpath / f"param_rec_{filename}"
     )
