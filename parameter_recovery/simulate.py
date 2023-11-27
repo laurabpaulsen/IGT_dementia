@@ -117,32 +117,32 @@ def simulate_ORL_group(
 
     for sub in range(n_subjects):
         # generate parameters
-        a_rew = np.random.normal(mu_a_rew, sigma_a_rew)
-        a_pun = np.random.normal(mu_a_pun, sigma_a_pun)
+        sub_a_rew[sub] = np.random.normal(mu_a_rew, sigma_a_rew)
+        sub_a_pun[sub] = np.random.normal(mu_a_pun, sigma_a_pun)
 
         # check that parameters are between 0 and 1
-        while a_rew < 0 or a_rew > 1:
-            a_rew = np.random.normal(mu_a_rew, sigma_a_rew)
-        while a_pun < 0 or a_pun > 1:
-            a_pun = np.random.normal(mu_a_pun, sigma_a_pun)
+        while sub_a_rew[sub] < 0 or sub_a_rew[sub] > 1:
+            sub_a_rew[sub] = np.random.normal(mu_a_rew, sigma_a_rew)
+        while sub_a_pun[sub] < 0 or sub_a_pun[sub]  > 1:
+            sub_a_pun[sub] = np.random.normal(mu_a_pun, sigma_a_pun)
         
 
-        K = np.random.normal(mu_K, sigma_K)
-        omega_f = np.random.normal(mu_omega_f, sigma_omega_f)
-        omega_p = np.random.normal(mu_omega_p, sigma_omega_p)
+        sub_K[sub] = np.random.normal(mu_K, sigma_K)
+        sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
+        sub_omega_f[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
 
         # check that the parameters are < 0
-        while K < 0:
-            K = np.random.normal(mu_K, sigma_K)
-        while omega_f < 0:
-            omega_f = np.random.normal(mu_omega_f, sigma_omega_f)
-        while omega_p < 0:
-            omega_p = np.random.normal(mu_omega_p, sigma_omega_p)
+        while sub_K[sub] < 0:
+            sub_K[sub] = np.random.normal(mu_K, sigma_K)
+        while sub_omega_f[sub] < 0:
+            sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
+        while sub_omega_f[sub] < 0:
+            sub_omega_f[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
 
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
 
-        sub_data = simulate_ORL(payoff, n_trials, a_rew, a_pun, K, omega_f, omega_p)
+        sub_data = simulate_ORL(payoff, n_trials, sub_a_rew[sub], sub_a_pun[sub], sub_K[sub], sub_omega_f[sub], sub_omega_p[sub])
 
         choices[sub] = sub_data["choice"]
         outcomes[sub] = sub_data["outcome"]
