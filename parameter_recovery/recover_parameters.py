@@ -30,7 +30,7 @@ def recover_group_level(data, model_spec, savepath = None):
     for group in groups:
         # get the data for this group
         data_tmp = data[data["group"] == group]
-        n_subjects = len(data_tmp["subject"].unique())
+        n_subjects = len(data_tmp["sub"].unique())
         n_trials = len(data_tmp)//n_subjects
 
         # choices, outcome and sign_out should be n_subjects x n_trials
