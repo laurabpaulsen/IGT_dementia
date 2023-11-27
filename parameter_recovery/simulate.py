@@ -279,8 +279,8 @@ def simulate_ORL(
         outcomes[t] = payoff[t, int(choices[t])]
     
     data = {
-        "choice" : [int(choice) + 1 for choice in choices],
-        "outcome" : [int(outcome) + 1 for outcome in outcomes],
+        "choice" : choices.astype(int) + 1,
+        "outcome" : outcomes,
         "T": int(n_trials),
         "sign_out": sign_out
     }
