@@ -129,15 +129,15 @@ def simulate_ORL_group(
 
         sub_K[sub] = np.random.normal(mu_K, sigma_K)
         sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
-        sub_omega_f[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
 
         # check that the parameters are < 0
         while sub_K[sub] < 0:
             sub_K[sub] = np.random.normal(mu_K, sigma_K)
         while sub_omega_f[sub] < 0:
             sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
-        while sub_omega_f[sub] < 0:
-            sub_omega_f[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        while sub_omega_p[sub] < 0:
+            sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
 
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
