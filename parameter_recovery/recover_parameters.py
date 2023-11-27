@@ -30,9 +30,25 @@ def recover_group_level(data, model_spec, savepath = None):
     for group in groups:
         # get the data for this group
         data_tmp = data[data["group"] == group]
+        n_subjects = len(data_tmp["subject"].unique())
+        n_trials = len(data_tmp)//n_subjects
+
+        # choices, outcome and sign_out should be n_subjects x n_trials
+        choices = np.array(data_tmp["choice"]).reshape(n_subjects, n_trials)
+        outcomes = np.array(data_tmp["outcome"]).reshape(n_subjects, n_trials)
+        sign_out = np.array(data_tmp["sign_out"]).reshape(n_subjects, n_trials)
+
+        data_dict = {
+            "choice" : choices.astype(int),
+            "outcome" : outcomes,
+            "Tsubj" : np.ones(n_subjects).astype(int) * n_trials,
+            "sign_out" : sign_out,
+            "T": int(n_trials),
+            "N": int(n_subjects)
+        }
 
         # fit the model
-        model = stan.build(model_spec, data = data)
+        model = stan.build(model_spec, data = data_dict)
         fit = model.sample(num_chains = 4, num_samples = 1000)
 
         # get the estimated parameters
