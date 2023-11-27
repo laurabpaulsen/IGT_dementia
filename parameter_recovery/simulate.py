@@ -77,15 +77,15 @@ def simulate_ORL_group(
         n_subjects : int = 10,
         n_trials : int = 100,
         mu_a_rew : float = 0.3,
-        sigma_a_rew : float = 0.1,
+        sigma_a_rew : float = 0.05,
         mu_a_pun : float = 0.3,
-        sigma_a_pun : float = 0.1,
+        sigma_a_pun : float = 0.05,
         mu_K : float = 0.3,
-        sigma_K : float = 0.1,
+        sigma_K : float = 0.05,
         mu_omega_f : float = 0.7,
-        sigma_omega_f : float = 0.1,
+        sigma_omega_f : float = 0.05,
         mu_omega_p : float = 0.7,
-        sigma_omega_p : float = 0.1
+        sigma_omega_p : float = 0.05
         ):
     """
     Simulates behavioural data using the payoff structure and the ORL model given a group level mean
@@ -149,22 +149,22 @@ def simulate_ORL_group(
         sign_out[sub] = sub_data["sign_out"]
 
     data = {
-        "choice" : choices.astype(int),
-        "outcome" : outcomes,
-        "sign_out" : sign_out,
-        "sub" : [sub + 1 for sub in range(n_subjects) for i in range(n_trials)],
-        "sub_a_rew" : [sub_a_rew[sub] for sub in range(n_subjects) for i in range(n_trials)],
-        "sub_a_pun" : [sub_a_pun[sub] for sub in range(n_subjects) for i in range(n_trials)],
-        "sub_K" : [sub_K[sub] for sub in range(n_subjects) for i in range(n_trials)],
-        "sub_omega_f" : [sub_omega_f[sub] for sub in range(n_subjects) for i in range(n_trials)],
-        "sub_omega_p" : [sub_omega_p[sub] for sub in range(n_subjects) for i in range(n_trials)]
+        "choice": choices.astype(int),
+        "outcome": outcomes,
+        "sign_out": sign_out,
+        "sub": [sub + 1 for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub_a_rew": [sub_a_rew[sub] for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub_a_pun": [sub_a_pun[sub] for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub_K": [sub_K[sub] for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub_omega_f": [sub_omega_f[sub] for sub in range(n_subjects) for _ in range(n_trials)],
+        "sub_omega_p": [sub_omega_p[sub] for sub in range(n_subjects) for _ in range(n_trials)],
     }
+
 
     # prep for dataframe conversion
     data["choice"] = data["choice"].flatten()
     data["outcome"] = data["outcome"].flatten()
     data["sign_out"] = data["sign_out"].flatten()
-
 
 
     # make into a dataframe
@@ -179,7 +179,7 @@ def simulate_ORL(
         a_rew : float = 0.3, 
         a_pun : float = 0.3, 
         K : float = 3,
-        theta : float = 3, 
+        theta : float = 1, 
         omega_f : float = 0.7, 
         omega_p : float = 0.7
         ):
@@ -307,8 +307,7 @@ if __name__ in "__main__":
         mu_a_pun = np.random.uniform(0, 1)
 
 
-        mu_K = np.random.uniform(0, 10)
-
+        mu_K = np.random.uniform(0, 5)
         mu_omega_f = np.random.uniform(0, 5)
         mu_omega_p = np.random.uniform(0, 5)
 
@@ -320,11 +319,11 @@ if __name__ in "__main__":
             mu_K = mu_K,
             mu_omega_f = mu_omega_f,
             mu_omega_p = mu_omega_p,
-            sigma_a_rew = 0.001,
-            sigma_a_pun = 0.001,
-            sigma_K = 0.001,
-            sigma_omega_f = 0.001,
-            sigma_omega_p = 0.001
+            sigma_a_rew = 0.05,
+            sigma_a_pun = 0.05,
+            sigma_K = 0.05,
+            sigma_omega_f = 0.05,
+            sigma_omega_p = 0.05
             )
     
         tmp_df = pd.DataFrame.from_dict(data)
