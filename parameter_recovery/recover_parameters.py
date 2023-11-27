@@ -4,9 +4,6 @@ import numpy as np
 import pandas as pd
 
 
-
-
-
 def recover_group_level(data, model_spec, savepath = None):
     """
     Generate synthetic data and fit the model to it. Check how well the parameters are recovered by plotting median against the true parameters.
@@ -79,7 +76,7 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load in the simulated data
-    filename = "ORL_simulated_2_groups_3_sub.csv"
+    filename = "ORL_simulated_10_groups_20_sub.csv"
     data = pd.read_csv(path / "simulated" / filename)
 
     recover_group_level(
