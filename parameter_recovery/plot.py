@@ -1,52 +1,37 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 from pathlib import Path
+from statistics import mode
+from scipy.stats import binom
 
-def plot_recovery_ax(ax, true, estimated, parameter_name):
-    """
-    Helper function for plot_recoveries
-    """
-    ax.scatter(true, estimated)
-    x_lims = ax.get_xlim()
-    ax.plot([0, x_lims[1]], [0, x_lims[1]], color = "black", linestyle = "dashed")
-    ax.set_xlabel("True")
-    ax.set_ylabel("Estimated")
-    ax.set_title(parameter_name.title())
+# local imports
+import sys
+sys.path.append(str(Path(__file__).parents[1]))
+from plot_fns import plot_recoveries, plot_descriptive_adequacy
 
 
-def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path):
+def chance_level(n, alpha = 0.001, p = 0.5):
     """
-    Plot the recovery of the parameters.
+    Calculates the chance level for a given number of trials and alpha level
 
     Parameters
     ----------
-    trues : list
-        List of true parameters.
-    estimateds : list
-        List of estimated parameters.
-    parameter_names : list
-        List of parameter names.
-    savepath : Path
-        Path to save the figure to.
-    
+    n : int
+        The number of trials.
+    alpha : float
+        The alpha level.
+    p : float
+        The probability of a correct response.
+
     Returns
     -------
-    None
+    chance_level : float
+        The chance level.
     """
-    fig, axes = plt.subplots(2, len(trues) // 2 + (len(trues) % 2 > 0), figsize = (10, 7), dpi = 300)
+    k = binom.ppf(1-alpha, n, p)
+    chance_level = k/n
     
-    for true, estimated, parameter_name, axis in zip(trues, estimateds, parameter_names, axes.flatten()):
-        plot_recovery_ax(axis, true, estimated, parameter_name)
+    return chance_level
 
-    # if any of the axes is empty, remove it
-    for axis in axes.flatten():
-        if not axis.get_title():
-            fig.delaxes(axis)
-    
-    plt.tight_layout()
-    
-    if savepath:
-        plt.savefig(savepath)
 
 
 
@@ -124,6 +109,10 @@ if __name__ == "__main__":
     omega_f_e = []
     omega_p_e = []
 
+    choices = []
+    pred_choices = []
+    groups = []
+
     for group in unique_groups:
         data_tmp = data[data["group"] == group]
         data_tmp_est = data_estimated[data_estimated["group"] == group]
@@ -132,24 +121,40 @@ if __name__ == "__main__":
         unique_subjects = data_tmp["sub"].unique()
 
         for sub in unique_subjects:
+            groups.append(group)
             data_tmp_sub = data_tmp[data_tmp["sub"] == sub]
             a_rew_t.append(data_tmp_sub["sub_a_rew"].iloc[0])
             a_pun_t.append(data_tmp_sub["sub_a_pun"].iloc[0])
             K_t.append(data_tmp_sub["sub_K"].iloc[0])
             omega_f_t.append(data_tmp_sub["sub_omega_f"].iloc[0])
             omega_p_t.append(data_tmp_sub["sub_omega_p"].iloc[0])
+            choices.append(data_tmp_sub["choice"].tolist())
             
             a_rew_e.append(data_tmp_est[f"a_rew.{sub}"].mean())
             a_pun_e.append(data_tmp_est[f"a_pun.{sub}"].mean())
             K_e.append(data_tmp_est[f"K.{sub}"].mean())
             omega_f_e.append(data_tmp_est[f"omega_f.{sub}"].mean())
             omega_p_e.append(data_tmp_est[f"omega_p.{sub}"].mean())
+            pred_choices.append([int(mode(data_tmp_est[f"y_pred.{sub}.{trial}"])) for trial in range(1, 100+1)])
     
     # plot the recovery of the parameters
     plot_recoveries(
         trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t],
         estimateds = [a_rew_e, a_pun_e, K_e, omega_f_e, omega_p_e],
-        #parameter_names = [r"$A_{rew}$", r"$A_{pun}$", r"$K$", r"$\omega_f$", r"$\omega_p$"],
-        parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
+        parameter_names = [r"$A_{rew}$", r"$A_{pun}$", r"$K$", r"$\omega_f$", r"$\omega_p$"],
+        #parameter_names = ["a_pun", "a_rew", "K", "omega_f", "omega_p"],
         savepath = fig_path / "hierachical_parameter_recovery_ORL_individual.png"
     )
+
+
+    # plot the descriptive adequacy
+    plot_descriptive_adequacy(
+        choices, 
+        pred_choices, 
+        groups = groups, 
+        chance_level = chance_level(100, p = 0.25)*100,
+        savepath = fig_path / "descriptive_adequacy_ORL.png"
+        )
+    
+
+    
