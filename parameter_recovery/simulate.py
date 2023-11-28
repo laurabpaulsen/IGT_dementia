@@ -171,7 +171,6 @@ def simulate_ORL(
         a_rew : float = 0.3, 
         a_pun : float = 0.3, 
         K : float = 3,
-        theta : float = 1, 
         omega_f : float = 0.7, 
         omega_p : float = 0.7
         ):
@@ -190,8 +189,6 @@ def simulate_ORL(
         Learning rate for punishments.
     K : float
         Perseveration parameter.
-    theta : float
-        Inverse temperature parameter.
     omega_f : float
         Weighting parameter for expected frequencies.
     omega_p : float
@@ -205,66 +202,57 @@ def simulate_ORL(
 
     """
 
-    choices = np.zeros(n_trials)
+    choices = np.zeros(n_trials).astype(int)
     outcomes = np.zeros(n_trials)
     sign_out = np.zeros(n_trials)
 
-    ev = np.zeros((n_trials, 4))
-    perseverance = np.zeros((n_trials, 4))
-    exp_freq = np.zeros((n_trials, 4))
-    valence = np.zeros((n_trials, 4))
-
-    exp_p = np.zeros((n_trials, 4))
-    p = np.zeros((n_trials, 4))
-
-    # initial values
-    ev[0] = np.zeros(4)
-    exp_freq[0] = np.zeros(4)
-    perseverance[0] = np.ones(4) / (1 - K)
-
-    # initial choice
-    choices[0] = np.random.choice(4, p=np.ones(4) / 4)
-    outcomes[0] = payoff[0, int(choices[0])]
-
+    # setting initial values
+    ev = np.zeros(4)
+    perseverance = np.zeros(4)
+    ef = np.zeros(4)
 
     # looping over trials
-    for t in range(1, n_trials):
-        # get the sign of the reward on the previous trial
-        sign_out[t] = np.sign(outcomes[t - 1])
+    for t in range(0, n_trials):
+        valence = ev + omega_f * ef + omega_p * perseverance
+        
+        # probability of choosing each deck (softmax)
+        exp_p = np.exp(valence)
+        p = exp_p / np.sum(exp_p)
 
-        for d in range(4):
-            if d != int(choices[t - 1]): # if the deck was not chosen
-                ev[t, d] = ev[t - 1, d] # expected value stays the same
-                perseverance[t, d] = perseverance[t - 1, d]/(1 + K) # perseverance decays
-
-                if sign_out[t] == 1:
-                    exp_freq[t, d] = exp_freq[t - 1, d] + a_rew * (-exp_freq[t - 1, d])
-                else:
-                    exp_freq[t, d] = exp_freq[t - 1, d] + a_pun * (-exp_freq[t - 1, d])
-
-
-            else: # if the deck was chosen
-                perseverance[t, d] = 1 / (1 + K) # perseverance resets
-
-                if sign_out[t] == 1: # if the reward was positive
-                    ev[t, d] = ev[t - 1, d] + a_rew * (outcomes[t - 1] - ev[t - 1, d])
-                    exp_freq[t, d] = exp_freq[t - 1, d] + a_rew * (1 - exp_freq[t - 1, d])
-                else: # if the reward was negative
-                    ev[t, d] = ev[t - 1, d] + a_pun * (outcomes[t - 1] - ev[t - 1, d])
-                    exp_freq[t, d] = exp_freq[t - 1, d] + a_pun * (1 - exp_freq[t - 1, d])
-
-            
-            # valence model
-            valence[t, d] = ev[t, d] + omega_f * exp_freq[t, d] + omega_p * perseverance[t, d]
-
-        # softmax
-        exp_p[t] = np.exp(theta * valence[t])
-        p[t] = exp_p[t] / np.sum(exp_p[t])
-            
         # choice
-        choices[t] = np.random.choice(4, p=p[t])
+        choices[t] = np.random.choice(4, p=p)
+        
+        # outcome
         outcomes[t] = payoff[t, int(choices[t])]
-    
+
+        # get the sign of the reward
+        sign_out[t] = np.sign(outcomes[t])
+
+        # update perseveration
+        # set perseveration to 1 if the deck was chosen
+        perseverance[choices[t]] = 1
+        perseverance = perseverance / (1 + K)
+        
+        # update expected value for chosen deck
+        if sign_out[t] == 1:
+            ev[choices[t]] = ev[choices[t]] + a_rew * (outcomes[t] - ev[choices[t]])
+        else:
+            ev[choices[t]] = ev[choices[t]] + a_pun * (outcomes[t] - ev[choices[t]])
+        
+        # update expected frequency for chosen deck
+        if sign_out[t] == 1:
+            ef[choices[t]] = ef[choices[t]] + a_rew * (1 - ef[choices[t]])
+        else:
+            ef[choices[t]] = ef[choices[t]] + a_pun * (1 - ef[choices[t]])
+        
+        # update expected value for unchosen decks (fictive frequencies)
+        for d in range(4):
+            if d != int(choices[t]):
+                if sign_out[t] == 1:
+                    ev[d] = ev[d] + a_rew * (sign_out[t]/3 * -ev[d])
+                else:
+                    ev[d] = ev[d] + a_pun * (sign_out[t]/3 * -ev[d])
+
     data = {
         "choice" : choices.astype(int) + 1,
         "outcome" : outcomes,
