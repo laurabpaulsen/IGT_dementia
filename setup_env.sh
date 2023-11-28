@@ -14,4 +14,7 @@ python -m pip install -r "$scriptDir/requirements.txt"
 
 python -m pip install pystan
 
+# install antiword used for extracting data from .doc files
+sudo apt install antiword
+
 echo "Done!"
