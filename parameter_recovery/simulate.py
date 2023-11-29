@@ -245,13 +245,13 @@ def simulate_ORL(
         else:
             ef[choices[t]] = ef[choices[t]] + a_pun * (1 - ef[choices[t]])
         
-        # update expected value for unchosen decks (fictive frequencies)
+        # update expected frequency for unchosen decks (fictive frequencies)
         for d in range(4):
             if d != int(choices[t]):
                 if sign_out[t] == 1:
-                    ev[d] = ev[d] + a_rew * (sign_out[t]/3 * -ev[d])
+                    ef[d] = ef[d] + a_rew * (sign_out[t]/3 * -ef[d])
                 else:
-                    ev[d] = ev[d] + a_pun * (sign_out[t]/3 * -ev[d])
+                    ef[d] = ef[d] + a_pun * (sign_out[t]/3 * -ef[d])
 
     data = {
         "choice" : choices.astype(int) + 1,
