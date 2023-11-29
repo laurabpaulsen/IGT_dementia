@@ -105,7 +105,7 @@ def simulate_ORL_group(
         A dictionary containing the simulated data.
     """
 
-    choices, outcomes, sign_out = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
+    choices, outcomes, sign_out, trial = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
     sub_a_rew, sub_a_pun, sub_K = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
     sub_omega_f, sub_omega_p = np.zeros(n_subjects), np.zeros(n_subjects)
 
@@ -142,11 +142,13 @@ def simulate_ORL_group(
         choices[sub] = sub_data["choice"]
         outcomes[sub] = sub_data["outcome"]
         sign_out[sub] = sub_data["sign_out"]
+        trial[sub] = sub_data["trial"]
 
     data = {
-        "choice": choices.astype(int),
-        "outcome": outcomes,
-        "sign_out": sign_out,
+        "choice": choices.astype(int).flatten(),
+        "outcome": outcomes.flatten(),
+        "sign_out": sign_out.flatten(),
+        "trial": trial.flatten(),
         "sub": np.repeat(np.arange(1, n_subjects + 1), n_trials),
         "sub_a_rew": np.repeat(sub_a_rew, n_trials),
         "sub_a_pun": np.repeat(sub_a_pun, n_trials),
@@ -156,7 +158,7 @@ def simulate_ORL_group(
     }
 
     # flatten the two dimensional arrays
-    for var in ["choice", "outcome", "sign_out"]:
+    for var in ["choice", "outcome", "sign_out", "trial"]:
         data[var] = data[var].flatten()
 
     # make into a dataframe
@@ -212,7 +214,7 @@ def simulate_ORL(
     ef = np.zeros(4)
 
     # looping over trials
-    for t in range(0, n_trials):
+    for t in range(n_trials):
         valence = ev + omega_f * ef + omega_p * perseverance
         
         # probability of choosing each deck (softmax)
@@ -256,12 +258,14 @@ def simulate_ORL(
     data = {
         "choice" : choices.astype(int) + 1,
         "outcome" : outcomes,
-        "T": int(n_trials),
+        "trial":  range(1, n_trials + 1),
         "sign_out": sign_out
     }
 
     return data
-        
+
+
+
 
 
 if __name__ in "__main__":
@@ -272,10 +276,8 @@ if __name__ in "__main__":
 
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
-
-    df = pd.DataFrame()
     
-    n_groups = 10 
+    n_groups = 20
     n_subjects = 20
 
     for group in range(n_groups):
@@ -302,17 +304,15 @@ if __name__ in "__main__":
             sigma_omega_p = 0.05
             )
     
-        tmp_df = pd.DataFrame.from_dict(data)
-        tmp_df["group"] = group + 1
-        tmp_df["mu_a_rew"] = mu_a_rew
-        tmp_df["mu_a_pun"] = mu_a_pun
-        tmp_df["mu_K"] = mu_K
-        tmp_df["mu_omega_f"] = mu_omega_f
-        tmp_df["mu_omega_p"] = mu_omega_p
+        df = pd.DataFrame.from_dict(data)
+        df["mu_a_rew"] = mu_a_rew
+        df["mu_a_pun"] = mu_a_pun
+        df["mu_K"] = mu_K
+        df["mu_omega_f"] = mu_omega_f
+        df["mu_omega_p"] = mu_omega_p
 
-        df = pd.concat([df, tmp_df])
 
-    df.to_csv(output_path / f"ORL_simulated_{n_groups}_groups_{n_subjects}_sub.csv", index=False)
+        df.to_csv(output_path / f"ORL_simulated_group_{group+1}_{n_subjects}_sub.csv", index=False)
 
 
     

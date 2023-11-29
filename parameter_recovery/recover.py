@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def recover_group_level(data, model_spec, savepath = None):
+def recover_group_level(data1, data2, model_spec, savepath = None):
     """
     Generate synthetic data and fit the model to it. Check how well the parameters are recovered by plotting median against the true parameters.
 
@@ -17,50 +17,43 @@ def recover_group_level(data, model_spec, savepath = None):
     savepath : Path, optional
         Path to save the fitted parameters to. The default is None.
     """
+    data1["group"] = 0
+    data2["group"] = 1
+    data2["sub"] = data2["sub"] + data1["sub"].nunique()
 
-    data_estimated = pd.DataFrame()
+    data = pd.concat([data1, data2])
 
+    intercept = np.ones(int(len(data)))
+    groups = data["group"] - 0.5 
+    design_matrix = np.vstack((intercept, groups)).T
 
-    # get the unique groups
-    groups = data["group"].unique()
+    print(design_matrix)
 
-    for group in groups:
-        # get the data for this group
-        data_tmp = data[data["group"] == group]
-        n_subjects = len(data_tmp["sub"].unique())
-        n_trials = len(data_tmp)//n_subjects
+    data_dict = {
+        "choice" : np.array(data["choice"]).astype(int),
+        "outcome" : np.array(data["outcome"]),
+        "sign_out" : np.array(data["sign_out"]),
+        "subject":  np.array(data["sub"]).astype(int),
+        "trial": np.array(data["trial"]).astype(int),
+        "N": int(len(data)), #total number of trials
+        "Nsubj": int(data["sub"].nunique()),
+        "C": 4, # number of decks,
+        "N_beta": 2,
+        "X" : design_matrix
 
-        # choices, outcome and sign_out should be n_subjects x n_trials
-        choices = np.array(data_tmp["choice"]).reshape(n_subjects, n_trials)
-        outcomes = np.array(data_tmp["outcome"]).reshape(n_subjects, n_trials)
-        sign_out = np.array(data_tmp["sign_out"]).reshape(n_subjects, n_trials)
+    }
 
-        data_dict = {
-            "choice" : choices.astype(int),
-            "outcome" : outcomes,
-            "Tsubj" : np.ones(n_subjects).astype(int) * n_trials,
-            "sign_out" : sign_out,
-            "T": int(n_trials),
-            "N": int(n_subjects)
-        }
+    # fit the model
+    model = stan.build(model_spec, data = data_dict)
+    fit = model.sample(num_chains = 4, num_samples = 1000)
 
-        # fit the model
-        model = stan.build(model_spec, data = data_dict)
-        fit = model.sample(num_chains = 4, num_samples = 1000)
-
-        # get the estimated parameters
-        df = fit.to_frame()
-
-        # add the group number
-        df["group"] = group
-        
-        # add to the data
-        data_estimated = pd.concat([data_estimated, df])
+    # get the estimated parameters
+    df = fit.to_frame()
 
 
     # save the data
     if savepath:
-        data_estimated.to_csv(savepath, index = False)
+        df.to_csv(savepath, index = False)
 
 
 
@@ -76,16 +69,16 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load in the simulated data
-    filename = "ORL_simulated_10_groups_20_sub.csv"
-    data = pd.read_csv(path / "simulated" / filename)
+    filename1 = "ORL_simulated_group_1_20_sub.csv"
+    data1 = pd.read_csv(path / "simulated" / filename1)
 
-    # make data long format 
-    data = data.melt(id_vars = ["group", "sub"], value_vars = ["choice", "outcome", "sign_out"], var_name = "var", value_name = "value")
+    filename2 = "ORL_simulated_group_2_20_sub.csv"
+    data2 = pd.read_csv(path / "simulated" / filename1)
 
-    print(data.head())
 
     recover_group_level(
-        data = data,
+        data1 = data1,
+        data2 = data2, 
         model_spec = model_spec,
-        savepath = outpath / f"param_rec_{filename}"
+        savepath = outpath / f"param_rec.csv"
     )
