@@ -2,6 +2,7 @@ import stan
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from itertools import combinations
 
 
 def recover_group_level(data1, data2, model_spec, savepath = None):
@@ -68,17 +69,20 @@ if __name__ == "__main__":
     with open(path.parent / "hierachical_IGT_ORL.stan") as f:
         model_spec = f.read()
 
-    # load in the simulated data
-    filename1 = "ORL_simulated_group_1_20_sub.csv"
-    data1 = pd.read_csv(path / "simulated" / filename1)
+    # make a list of tuples with all combinations of groups (don't want to compare group 1 with group 1 or group 1 with group 2 and group 2 with group 1)
+    n_groups = 20
+    compare_groups = list(combinations(range(1, n_groups + 1), 2))
+ 
+    for group1, group2 in compare_groups:
+        filename1 = f"ORL_simulated_group_{group1}_20_sub.csv"
+        data1 = pd.read_csv(path / "simulated" / filename1)
+        
+        filename2 = f"ORL_simulated_group_{group2}_20_sub.csv"
+        data2 = pd.read_csv(path / "simulated" / filename2)
 
-    filename2 = "ORL_simulated_group_2_20_sub.csv"
-    data2 = pd.read_csv(path / "simulated" / filename1)
-
-
-    recover_group_level(
-        data1 = data1,
-        data2 = data2, 
-        model_spec = model_spec,
-        savepath = outpath / f"param_rec.csv"
-    )
+        recover_group_level(
+            data1 = data1, 
+            data2 = data2, 
+            model_spec = model_spec,
+            savepath = outpath / f"param_rec_{group1}_{group2}.csv"
+        )
