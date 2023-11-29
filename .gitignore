@@ -161,3 +161,9 @@ cython_debug/
 
 # ds_store files
 .DS_Store
+
+# csv files
+*.csv
+
+# data files
+parameter_estimation/data/*
