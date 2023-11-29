@@ -79,6 +79,11 @@ if __name__ == "__main__":
     filename = "ORL_simulated_10_groups_20_sub.csv"
     data = pd.read_csv(path / "simulated" / filename)
 
+    # make data long format 
+    data = data.melt(id_vars = ["group", "sub"], value_vars = ["choice", "outcome", "sign_out"], var_name = "var", value_name = "value")
+
+    print(data.head())
+
     recover_group_level(
         data = data,
         model_spec = model_spec,
