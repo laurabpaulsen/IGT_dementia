@@ -2,11 +2,13 @@ import pandas as pd
 from pathlib import Path
 from statistics import mode
 from scipy.stats import binom
+import re
 
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from plot_fns import plot_recoveries, plot_descriptive_adequacy
+from utils import logit, inv_logit
 
 
 def chance_level(n, alpha = 0.001, p = 0.5):
@@ -33,7 +35,56 @@ def chance_level(n, alpha = 0.001, p = 0.5):
     return chance_level
 
 
+def load_simulated(path : Path) -> dict:
 
+    data = {}
+    # loop over all csv files in the simulated folder
+    for file in path.glob("*.csv"):
+        data_tmp = pd.read_csv(file)
+
+        data[int(file.stem.split("_")[-3])] = {
+            "data" : data_tmp, 
+            "mu_a_rew" : data_tmp["mu_a_rew"].unique()[0],
+            "mu_a_pun" : data_tmp["mu_a_pun"].unique()[0],
+            "mu_K" : data_tmp["mu_K"].unique()[0],
+            "mu_omega_f" : data_tmp["mu_omega_f"].unique()[0],
+            "mu_omega_p" : data_tmp["mu_omega_p"].unique()[0],
+
+            }
+
+    return data
+
+def load_recovered(path : Path) -> dict:
+    data = {}
+
+    # loop over all csv files in the simulated folder
+    for file in path.glob("*.csv"):
+        data_tmp = pd.read_csv(
+            file, 
+            usecols=["a_pun_betas.1", "a_rew_betas.1", "K_betas.1", "omega_f_betas.1", "omega_p_betas.1",  # intercepts
+                     "a_pun_betas.2", "a_rew_betas.2", "K_betas.2", "omega_f_betas.2", "omega_p_betas.2"]) # slopes
+        
+        group1 = int(re.split("_", file.stem)[-2])
+        group2 = int(re.split("_", file.stem)[-1])
+        
+
+        data[file.stem] = {
+            #"data" : data_tmp, 
+            "group1" : group1,
+            "group2" : group2,
+            "intercept_a_pun" : data_tmp["a_pun_betas.1"].mean(),
+            "intercept_a_rew" : data_tmp["a_rew_betas.1"].mean(),
+            "intercept_K" : data_tmp["K_betas.1"].mean(),
+            "intercept_omega_f" : data_tmp["omega_f_betas.1"].mean(),
+            "intercept_omega_p" : data_tmp["omega_p_betas.1"].mean(),
+            "slope_a_pun" : data_tmp["a_pun_betas.2"].mean(),
+            "slope_a_rew" : data_tmp["a_rew_betas.2"].mean(),
+            "slope_K" : data_tmp["K_betas.2"].mean(),
+            "slope_omega_f" : data_tmp["omega_f_betas.2"].mean(),
+            "slope_omega_p" : data_tmp["omega_p_betas.2"].mean(),
+            }
+
+    return data
 
 if __name__ == "__main__":
     path = Path(__file__).parent
@@ -43,6 +94,84 @@ if __name__ == "__main__":
     # create the figure path if it does not exist
     if not fig_path.exists():
         fig_path.mkdir()
+
+    # load the simulated data
+    data_sim = load_simulated(path / "simulated")
+
+    # load the recovered data
+    data_rec = load_recovered(path / "fit")
+
+    # get the true and recovered parameters
+    mu_a_rew_t = []
+    mu_a_pun_t = []
+    mu_K_t = []
+    mu_omega_f_t = []
+    mu_omega_p_t = []
+
+    mu_a_rew_r = []
+    mu_a_pun_r = []
+    mu_K_r = []
+    mu_omega_f_r = []
+    mu_omega_p_r = []
+
+
+    for key in data_rec.keys():
+        
+        # group 1 is modelled as -0.5 and group 2 as 0.5
+        group_1 = data_rec[key]["group1"] # check if this is correct or if it should be the other way around
+        group_2 = data_rec[key]["group2"] # check if this is correct or if it should be the other way around
+
+        # true group differences
+        mu_a_rew_t.append(data_sim[group_1]["mu_a_rew"] - data_sim[group_2]["mu_a_rew"])
+        mu_a_pun_t.append(data_sim[group_1]["mu_a_pun"] - data_sim[group_2]["mu_a_pun"])
+        mu_K_t.append(data_sim[group_1]["mu_K"] - data_sim[group_2]["mu_K"])
+        mu_omega_f_t.append(data_sim[group_1]["mu_omega_f"] - data_sim[group_2]["mu_omega_f"])
+        mu_omega_p_t.append(data_sim[group_1]["mu_omega_p"] - data_sim[group_2]["mu_omega_p"])
+
+        # recovered group differences
+        # ADD THE CALCULATION OF THE GROUP DIFFERENCES HERE!!! 
+        # NEED TO TAKE INTO ACCOUNT THE INTERCEPTS AND THE SLOPES and logit transformation of the 
+
+        """
+        K = inv_logit(X * K_betas +  K_subj[subject]); // restriciting K to be between 0 and 5
+        omega_f = X * omega_f_betas + omega_f_subj[subject];
+        omega_p = X * omega_p_betas + omega_p_subj[subject];
+        a_rew = inv_logit(X * a_rew_betas + a_rew_subj[subject]);
+        a_pun = inv_logit(X * a_pun_betas + a_pun_subj[subject]);
+        """
+        recovered_mu_K = inv_logit(data_rec[key]["intercept_K"] + data_rec[key]["slope_K"])
+        recovered_mu_omega_f = data_rec[key]["intercept_omega_f"] + data_rec[key]["slope_omega_f"]
+        recovered_mu_omega_p = data_rec[key]["intercept_omega_p"] + data_rec[key]["slope_omega_p"]
+        recovered_mu_a_rew = inv_logit(data_rec[key]["intercept_a_rew"] + data_rec[key]["slope_a_rew"])
+        recovered_mu_a_pun = inv_logit(data_rec[key]["intercept_a_pun"] + data_rec[key]["slope_a_pun"])
+
+        print(recovered_mu_K, recovered_mu_omega_f, recovered_mu_omega_p, recovered_mu_a_rew, recovered_mu_a_pun)
+
+        mu_a_rew_r.append(recovered_mu_a_rew)
+        mu_a_pun_r.append(recovered_mu_a_pun)
+        mu_K_r.append(recovered_mu_K)
+        mu_omega_f_r.append(recovered_mu_omega_f)
+        mu_omega_p_r.append(recovered_mu_omega_p)
+
+
+    # plot the recovery of the parameters
+    plot_recoveries(
+        trues = [mu_a_rew_t, mu_a_pun_t, mu_K_t, mu_omega_f_t, mu_omega_p_t],
+        estimateds = [mu_a_rew_r, mu_a_pun_r, mu_K_r, mu_omega_f_r, mu_omega_p_r],
+        parameter_names=["mu_a_pun", "mu_a_rew", "mu_K", "mu_omega_f", "mu_omega_p"],
+        #parameter_names = [r"$\mu A_{rew}$", r"$\mu A_{pun}$", r"$\mu K$", r"$\mu \omega_f$", r"$\mu \omega_p$"],
+        savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
+    )
+
+
+
+
+
+
+
+
+
+"""
 
     # load the simulated data
     filename = "ORL_simulated_10_groups_20_sub.csv"
@@ -93,6 +222,8 @@ if __name__ == "__main__":
         #parameter_names = [r"$\mu A_{rew}$", r"$\mu A_{pun}$", r"$\mu K$", r"$\mu \omega_f$", r"$\mu \omega_p$"],
         savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
     )
+
+
 
 
     # individual parameters
@@ -157,4 +288,4 @@ if __name__ == "__main__":
         )
     
 
-    
+"""
