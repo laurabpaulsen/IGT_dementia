@@ -277,7 +277,7 @@ if __name__ in "__main__":
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-    n_groups = 20
+    n_groups = 10
     n_subjects = 20
 
     for group in range(n_groups):
