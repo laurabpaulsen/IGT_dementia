@@ -126,8 +126,8 @@ def simulate_ORL_group(
         sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
         sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
 
-        # check that the parameters are < 0
-        while sub_K[sub] < 0:
+        # check that the parameters are < 0 and k between 0 and 5
+        while sub_K[sub] < 0 or sub_K[sub] > 5:
             sub_K[sub] = np.random.normal(mu_K, sigma_K)
         while sub_omega_f[sub] < 0:
             sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
