@@ -18,14 +18,13 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
     savepath : Path, optional
         Path to save the fitted parameters to. The default is None.
     """
-    data1["group"] = 0
-    data2["group"] = 1
+    data1["group"] = -0.5
+    data2["group"] = 0.5
     data2["sub"] = data2["sub"] + data1["sub"].nunique()
 
     data = pd.concat([data1, data2])
 
     intercept = np.ones(int(len(data)))
-    groups = data["group"] - 0.5 
     design_matrix = np.vstack((intercept, groups)).T
 
     print(design_matrix)
