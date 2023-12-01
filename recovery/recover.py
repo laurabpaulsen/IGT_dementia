@@ -25,7 +25,7 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
     data = pd.concat([data1, data2])
 
     intercept = np.ones(int(len(data)))
-    design_matrix = np.vstack((intercept, groups)).T
+    design_matrix = np.vstack((intercept, data["group"])).T
 
     print(design_matrix)
 
