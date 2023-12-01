@@ -118,8 +118,8 @@ if __name__ == "__main__":
     for key in data_rec.keys():
         
         # group 1 is modelled as -0.5 and group 2 as 0.5
-        group_1 = data_rec[key]["group2"] # check if this is correct or if it should be the other way around
-        group_2 = data_rec[key]["group1"] # check if this is correct or if it should be the other way around
+        group_1 = data_rec[key]["group1"] # check if this is correct or if it should be the other way around
+        group_2 = data_rec[key]["group2"] # check if this is correct or if it should be the other way around
 
         # true group differences
         mu_a_rew_t.append(data_sim[group_1]["mu_a_rew"] - data_sim[group_2]["mu_a_rew"])
@@ -139,11 +139,11 @@ if __name__ == "__main__":
         a_rew = inv_logit(X * a_rew_betas + a_rew_subj[subject]);
         a_pun = inv_logit(X * a_pun_betas + a_pun_subj[subject]);
         """
-        recovered_mu_K = inv_logit(data_rec[key]["slope_K"])
+        recovered_mu_K = logit(data_rec[key]["slope_K"])
         recovered_mu_omega_f =  data_rec[key]["slope_omega_f"]
         recovered_mu_omega_p = data_rec[key]["slope_omega_p"]
-        recovered_mu_a_rew = inv_logit(data_rec[key]["slope_a_rew"])
-        recovered_mu_a_pun = inv_logit(data_rec[key]["slope_a_pun"])
+        recovered_mu_a_rew = logit(data_rec[key]["slope_a_rew"])
+        recovered_mu_a_pun = logit(data_rec[key]["slope_a_pun"])
 
         print(recovered_mu_K, recovered_mu_omega_f, recovered_mu_omega_p, recovered_mu_a_rew, recovered_mu_a_pun)
 
