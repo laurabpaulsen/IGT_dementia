@@ -48,7 +48,7 @@ transformed parameters {
   vector[N] omega_p;
 
 
-  K = inv_logit(X * K_betas +  K_subj[subject]); // restriciting K to be between 0 and 5
+  K = inv_logit(X * K_betas +  K_subj[subject]) * 5; // restriciting K to be between 0 and 5
   omega_f = X * omega_f_betas + omega_f_subj[subject];
   omega_p = X * omega_p_betas + omega_p_subj[subject];
   a_rew = inv_logit(X * a_rew_betas + a_rew_subj[subject]);
