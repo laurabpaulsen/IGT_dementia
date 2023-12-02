@@ -23,15 +23,15 @@ if __name__ in "__main__":
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-    n_subjects = 50
+    n_subjects = 100
     df = pd.DataFrame()
     for subj in range(n_subjects):
         a_rew = np.random.uniform(0, 1)
         a_pun = np.random.uniform(0, 1)
 
         K = np.random.uniform(0, 5)
-        omega_f = np.random.uniform(0, 5)
-        omega_p = np.random.uniform(0, 5)
+        omega_f = np.random.uniform(-2, 5)
+        omega_p = np.random.uniform(-2, 5)
 
         data = simulate_ORL(
             a_rew = a_rew,
