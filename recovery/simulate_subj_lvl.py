@@ -49,7 +49,7 @@ if __name__ in "__main__":
         tmp_df["K"] = K
         tmp_df["omega_f"] = omega_f
         tmp_df["omega_p"] = omega_p
-        tmp_df["subject"] = subj + 1
+        tmp_df["sub"] = subj + 1
 
         df = pd.concat([df, tmp_df])
 
