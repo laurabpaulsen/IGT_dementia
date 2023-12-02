@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def create_payoff_structure(
         n_trials : int = 100, 
@@ -62,19 +63,20 @@ def create_payoff_structure(
 
     D = np.hstack([create_deck(good_r, good_infreq_l, infreq) for i in range(n_struct)]) # good infrequent
 
-    payoff = np.column_stack((A,B,C,D))/100 # combining all four decks as columns with each 100 trials - dividing our payoffs by 100 to make the numbers a bit easier to work with
+    payoff = np.column_stack((A,B,C,D))/100
 
     return payoff
 
 
 def simulate_ORL(
+        a_rew : float, 
+        a_pun : float, 
+        K : float,
+        omega_f : float,
+        omega_p : float, 
         payoff : np.ndarray = create_payoff_structure(), 
         n_trials : int = 100, 
-        a_rew : float = 0.3, 
-        a_pun : float = 0.3, 
-        K : float = 3,
-        omega_f : float = 0.7, 
-        omega_p : float = 0.7
+
         ):
     """
     Simulates behavioural data using the payoff structure and the ORL model.
@@ -163,3 +165,94 @@ def simulate_ORL(
     return data
 
 
+def simulate_ORL_group(
+        n_subjects : int = 10,
+        n_trials : int = 100,
+        mu_a_rew : float = 0.3,
+        sigma_a_rew : float = 0.05,
+        mu_a_pun : float = 0.3,
+        sigma_a_pun : float = 0.05,
+        mu_K : float = 0.3,
+        sigma_K : float = 0.05,
+        mu_omega_f : float = 0.7,
+        sigma_omega_f : float = 0.05,
+        mu_omega_p : float = 0.7,
+        sigma_omega_p : float = 0.05
+        ):
+    """
+    Simulates behavioural data using the payoff structure and the ORL model given a group level mean
+    for the parameters.
+
+    Parameters
+    ----------
+    n_subjects : int
+        Number of subjects in the group
+    n_trials : int
+        Total number of trials in our payoff structure. Must be divisible by 10.
+    
+    Returns
+    -------
+    data : dict
+        A dictionary containing the simulated data.
+    """
+
+    choices, outcomes, sign_out, trial = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
+    sub_a_rew, sub_a_pun, sub_K = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
+    sub_omega_f, sub_omega_p = np.zeros(n_subjects), np.zeros(n_subjects)
+
+
+    for sub in range(n_subjects):
+        # generate parameters
+        sub_a_rew[sub] = np.random.normal(mu_a_rew, sigma_a_rew)
+        sub_a_pun[sub] = np.random.normal(mu_a_pun, sigma_a_pun)
+
+        # check that parameters are between 0 and 1
+        while sub_a_rew[sub] < 0 or sub_a_rew[sub] > 1:
+            sub_a_rew[sub] = np.random.normal(mu_a_rew, sigma_a_rew)
+        while sub_a_pun[sub] < 0 or sub_a_pun[sub]  > 1:
+            sub_a_pun[sub] = np.random.normal(mu_a_pun, sigma_a_pun)
+        
+
+        sub_K[sub] = np.random.normal(mu_K, sigma_K)
+        sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
+        sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+
+        # check that the parameters are < 0 and k between 0 and 5
+        while sub_K[sub] < 0 or sub_K[sub] > 5:
+            sub_K[sub] = np.random.normal(mu_K, sigma_K)
+        while sub_omega_f[sub] < 0:
+            sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
+        while sub_omega_p[sub] < 0:
+            sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+
+        # simulate data
+        payoff = create_payoff_structure(n_trials=n_trials)
+
+        sub_data = simulate_ORL(payoff, n_trials, sub_a_rew[sub], sub_a_pun[sub], sub_K[sub], sub_omega_f[sub], sub_omega_p[sub])
+
+        choices[sub] = sub_data["choice"]
+        outcomes[sub] = sub_data["outcome"]
+        sign_out[sub] = sub_data["sign_out"]
+        trial[sub] = sub_data["trial"]
+
+    data = {
+        "choice": choices.astype(int).flatten(),
+        "outcome": outcomes.flatten(),
+        "sign_out": sign_out.flatten(),
+        "trial": trial.flatten(),
+        "sub": np.repeat(np.arange(1, n_subjects + 1), n_trials),
+        "sub_a_rew": np.repeat(sub_a_rew, n_trials),
+        "sub_a_pun": np.repeat(sub_a_pun, n_trials),
+        "sub_K": np.repeat(sub_K, n_trials),
+        "sub_omega_f": np.repeat(sub_omega_f, n_trials),
+        "sub_omega_p": np.repeat(sub_omega_p, n_trials)
+    }
+
+    # flatten the two dimensional arrays
+    for var in ["choice", "outcome", "sign_out", "trial"]:
+        data[var] = data[var].flatten()
+
+    # make into a dataframe
+    df = pd.DataFrame.from_dict(data)
+
+    return df
