@@ -28,8 +28,19 @@ if __name__ == "__main__":
 
     # load the recovered data
     rec_path = path / "fit" / "subj_lvl" / "param_rec_subj_lvl.csv"
-    rec_data = pd.read_csv(rec_path)
+    
+    # only load the first 5 rows
+    rec_data = pd.read_csv(rec_path, nrows = 5)
     print(len(rec_data[rec_data.columns[0]]))
+
+    # save the dataframe    
+    rec_data.to_csv(path / "test.csv", index = False)
+
+
+    print(rec_data["omega_p.1"].mean())
+    print(rec_data["omega_p.2"].mean())
+
+    print(rec_data["omega_p.3000"].mean())
 
 
 
@@ -56,7 +67,8 @@ if __name__ == "__main__":
         for param in ["a_rew", "a_pun", "omega_p", "omega_f", "K"]:
             param_dict[f"{param}_t"].append(tmp_sim[param].unique()[0])
 
-            recovered_param = rec_data[f"{param}.{sub}"]
+            recovered_param = rec_data[f"{param}.{sub * 100 - 100+1}"]
+            print(sub * 100 - 100 + 1)
 
             if param in ["omega_p", "omega_f"]:
                 param_dict[f"{param}_r"].append(np.mean(recovered_param))
@@ -68,6 +80,8 @@ if __name__ == "__main__":
             elif param in ["K"]:
                 #REMEBER TO CHANGE THIS
                 param_dict[f"{param}_r"].append(np.mean(recovered_param))
+
+        
 
 
 
