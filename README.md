@@ -6,6 +6,29 @@ This repository holds the code used for the exam project for decision making (F2
 ## Data
 The data used for this project, was graciously provided by xxxx and xxxx. The data is not publicly available, and therefore not included in this repository.
 
+## Repository structure
+```
+├── estimation                      
+│   ├── fig                           
+│   ├── data
+│   ├── estimate.py
+│   ├── preprocess.py
+│   └── ...                
+├── recovery                            
+│   ├── fig                           
+│   ├── simulate_group_lvl.py           
+│   ├── simulate_subj_lvl.py
+│   └── ...
+├── utils                               <- Local modules used in the project  
+│   ├── __init__.py        
+│   ├── simulate.py
+├── hierarchical_IGT_ORL.stan
+├── IGT_ORL.stan                       
+├── setup_env.sh     
+├── README.md                         
+├── setup_env.sh       
+```
+
 ## Pipeline
 As the data is not available in this repository, the parameter estimation pipeline cannot be replicated. However, all needed files for the parameter estimation pipeline are available. To reproduce the results, follow the pipeline below.
 
