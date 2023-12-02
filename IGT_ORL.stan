@@ -1,105 +1,168 @@
+
 data {
-  int N; // number of trials (total for all subjects)
-  int C; // number of decks, often 4 for IGT
-  int Nsubj; // how many subjects
-  // choice and outcome
-  array[N] int trial;
-  array[N] int subject;
-  array[N] int choice;
-  array[N] real outcome;
-  array[N] real sign_out;
+  int<lower=1> T; // number of trials
+  array[T] int choice;
+  array[T] real outcome;
+  array[T] real sign_out;
 }
-
+transformed data {
+  vector[4] initV;
+  initV  = rep_vector(0.0, 4);
+}
 parameters {
-  vector<lower=0,upper=1>[Nsubj] a_pun_subj;
-  vector<lower=0,upper=1>[Nsubj] a_rew_subj;
-  vector<lower=0>[Nsubj] K_subj;
-  vector[Nsubj] omega_f_subj;
-  vector[Nsubj] omega_p_subj;
-
-  real<lower=0> a_rew_sd;
-  real<lower=0> a_pun_sd;
-  real<lower=0> K_sd;
-  real<lower=0> omega_p_sd;
-  real<lower=0> omega_f_sd;
-
+  // Subject-level parameters (for Matt trick)
+  real<lower=0, upper=1> a_rew;
+  real<lower=0, upper=1> a_pun;
+  real<lower=0, upper=5> K;
+  real                   omega_f;
+  real                   omega_p;
 }
-
-transformed parameters {
-  vector[C] Ev; // Value
-  vector[C] Ef; // Frequency
-  vector[C] PS; // Perseverence
-  vector[C] p;  // probability of choice
-  //vector<lower=0,upper=1>[N] a_rew;
-  //vector<lower=0,upper=1>[N] a_pun;
-  //vector<lower=0, upper=5>[N] K;
-  //vector[N] omega_f;
-  //vector[N] omega_p;
-
-
-  //K = inv_logit(K_subj[subject]) * 5; // restriciting K to be between 0 and 5
-  //omega_f = omega_f_subj[subject];
-  //omega_p = omega_p_subj[subject];
-  //a_rew = inv_logit(a_rew_subj[subject]);
-  //a_pun = inv_logit(a_pun_subj[subject]);
-
-  for (i in 1:N) {
-    if (trial[i] == 1) {
-      // initial values at trial 1
-      for (deck in 1:C) {
-        Ev[deck] = 0;
-        Ef[deck] = 0;
-        PS[deck] = 1;
-        p [deck] = 0.25;
-      }
-    } else {
-      for (deck in 1:C) {
-        if (deck == choice[i-1]) {
-          // chosen deck
-          PS[deck] = 1.0 / (1 + K_subj[subject[i]]);
-          if (outcome[i-1] >= 0) {
-            // positive, outcome
-            Ev[deck] = Ev[deck] + (a_rew_subj[subject[i]] * (outcome[i-1] - Ev[deck]));
-            Ef[deck] = Ef[deck] + (a_rew_subj[subject[i]] * (sign_out[i-1]) - Ef[deck]);
-          } else {
-            // negative, loss
-            Ev[deck] = Ev[deck] + (a_pun_subj[subject[i]] * (outcome[i-1] - Ev[deck]));
-            Ef[deck] = Ef[deck] + (a_pun_subj[subject[i]] * (sign_out[i-1]) - Ef[deck]);
-          }
-        } else {
-          // the other, unchosen decks
-          Ev[deck] = Ev[deck];
-          PS[deck] = PS[deck] / (1 + K_subj[subject[i]]);
-          if (outcome[i-1] >= 0) {
-            // positive, outcome
-            Ef[deck] = Ef[deck] + (a_rew_subj[subject[i]] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
-          } else {
-            // negative, loss
-            Ef[deck] = Ef[deck] + (a_pun_subj[subject[i]] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
-          }
-        }
-      }
-      p = softmax((Ev + Ef*omega_f_subj[subject[i]] + PS*omega_p_subj[subject[i]]));
-    }
-  }
-}
-
 
 
 model {
-  a_rew_sd ~ normal(0, 10);
-  a_pun_sd ~ normal(0, 10);
-  K_sd ~ normal(0, 10);
-  omega_f_sd ~ normal(0, 10);
-  omega_p_sd ~ normal(0, 10);
+  a_rew     ~ normal(0, 1.0);
+  a_pun     ~ normal(0, 1.0);
+  K         ~ normal(0, 1.0);
+  omega_f   ~ normal(0, 1.0);
+  omega_p   ~ normal(0, 1.0);
 
-  a_rew_subj ~ normal(0, a_rew_sd);
-  a_pun_subj   ~ normal(0, a_pun_sd);
-  K_subj       ~ normal(0, K_sd);
-  omega_f_subj ~ normal(0, omega_f_sd);
-  omega_p_subj ~ normal(0, omega_p_sd);
+  // Define values
+    vector[4] ef;
+    vector[4] ev;
+    vector[4] PEfreq_fic;
+    vector[4] PEval_fic;
+    vector[4] pers;   // perseverance
+    vector[4] util;
 
-  for (t in 2:N) {
-    choice[t] ~ categorical(p);
-  }
+    real PEval;
+    real PEfreq;
+    real efChosen;
+    real evChosen;
+    real K_tr;
+
+    // Initialize values
+    ef    = initV;
+    ev    = initV;
+    pers  = initV; // initial pers values
+    util = initV;
+    //K_tr = pow(3, K) - 1;
+
+    for (t in 1:T) {
+      choice[t] ~ categorical_logit( util );
+      // Prediction error
+      PEval  = outcome[t] - ev[ choice[t]];
+      PEfreq = sign_out[t] - ef[ choice[t]];
+      PEfreq_fic = -sign_out[t]/3 - ef;
+
+      // store chosen deck ev
+      efChosen = ef[ choice[t]];
+      evChosen = ev[ choice[t]];
+
+      if (outcome[t] >= 0) {
+        // Update ev for all decks
+        ef += a_pun * PEfreq_fic;
+        // Update chosendeck with stored value
+        ef[ choice[t]] = efChosen + a_rew * PEfreq;
+        ev[ choice[t]] = evChosen + a_rew * PEval;
+      } else {
+        // Update ev for all decks
+        ef += a_rew * PEfreq_fic;
+        // Update chosendeck with stored value
+        ef[ choice[t]] = efChosen + a_pun * PEfreq;
+        ev[ choice[t]] = evChosen + a_pun * PEval;
+      }
+
+      // Perseverance updating
+      pers[ choice[t] ] = 1;   // perseverance term
+      //pers /= (1 + K_tr);        // decay
+      pers /= (1 + K);        // decay
+
+      // Utility of expected value and perseverance
+      util  = ev + ef * omega_f + pers * omega_p;
+    }
+  
+  
+
+
+   
 }
+
+
+generated quantities {
+
+  // For log likelihood calculation
+  real log_lik;
+
+  // For posterior predictive check
+  real y_pred[T];
+
+  // Set all posterior predictions to -1 (avoids NULL values)
+  for (t in 1:T) {
+    y_pred[t] = -1;
+  }
+
+
+
+  { // local section, this saves time and space
+
+      // Define values
+      vector[4] ef;
+      vector[4] ev;
+      vector[4] PEfreq_fic;
+      vector[4] PEval_fic;
+      vector[4] pers;   // perseverance
+      vector[4] util;
+
+      real PEval;
+      real PEfreq;
+      real efChosen;
+      real evChosen;
+      real K_tr;
+
+      // Initialize values
+      ef    = initV;
+      ev    = initV;
+      pers  = initV; // initial pers values
+      util  = initV;
+      K_tr = pow(3, K) - 1;
+      log_lik = 0;
+
+      for (t in 1:T) {
+        // softmax choice
+        log_lik += categorical_logit_lpmf( choice[t] | util );
+
+        // generate posterior prediction for current trial
+        y_pred[t] = categorical_rng(softmax(util));
+
+        // Prediction error
+        PEval  = outcome[t] - ev[ choice[t]];
+        PEfreq = sign_out[t] - ef[ choice[t]];
+        PEfreq_fic = -sign_out[t]/3 - ef;
+
+        // store chosen deck ev
+        efChosen = ef[ choice[t]];
+        evChosen = ev[ choice[t]];
+
+        if (outcome[t] >= 0) {
+          // Update ev for all decks
+          ef += a_pun * PEfreq_fic;
+          // Update chosendeck with stored value
+          ef[ choice[t]] = efChosen + a_rew * PEfreq;
+          ev[ choice[t]] = evChosen + a_rew * PEval;
+        } else {
+          // Update ev for all decks
+          ef += a_rew * PEfreq_fic;
+          // Update chosendeck with stored value
+          ef[ choice[t]] = efChosen + a_pun * PEfreq;
+          ev[ choice[t]] = evChosen + a_pun * PEval;
+        }
+
+        // Perseverance updating
+        pers[ choice[t] ] = 1;   // perseverance term
+        pers /= (1 + K_tr);        // decay
+
+        // Utility of expected value and perseverance
+        util  = ev + ef * omega_f + pers * omega_p;
+      }
+    }
+  }
