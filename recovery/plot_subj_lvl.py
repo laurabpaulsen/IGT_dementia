@@ -22,19 +22,15 @@ if __name__ == "__main__":
         fig_path.mkdir()
 
     # load the simulated data
-    n_subs = 2
+    n_subs = 50
     sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
     sim_data = pd.read_csv(sim_path)
 
     # load the recovered data
     rec_path = path / "fit" / "subj_lvl" / "param_rec_subj_lvl.csv"
     rec_data = pd.read_csv(rec_path)
+    print(len(rec_data[rec_data.columns[0]]))
 
-    for col in rec_data.columns[:10]:
-        print(col)
-        
-    for col in sim_data.columns[:10]:
-        print(col)
 
 
     # get the true and recovered parameters
@@ -66,10 +62,12 @@ if __name__ == "__main__":
                 param_dict[f"{param}_r"].append(np.mean(recovered_param))
             
             elif param in ["a_rew", "a_pun"]:
-                pass
+                # REMEBER TO CHANGE THIS
+                param_dict[f"{param}_r"].append(np.mean(recovered_param))
         
             elif param in ["K"]:
-                pass
+                #REMEBER TO CHANGE THIS
+                param_dict[f"{param}_r"].append(np.mean(recovered_param))
 
 
 
