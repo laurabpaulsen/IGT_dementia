@@ -96,10 +96,10 @@ if __name__ == "__main__":
         fig_path.mkdir()
 
     # load the simulated data
-    data_sim = load_simulated(path / "simulated")
+    data_sim = load_simulated(path / "simulated" / "group_lvl")
 
     # load the recovered data
-    data_rec = load_recovered(path / "fit")
+    data_rec = load_recovered(path / "fit" / "group_lvl")
 
     # get the true and recovered parameters
     mu_a_rew_t = []
