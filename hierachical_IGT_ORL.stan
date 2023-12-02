@@ -37,10 +37,10 @@ parameters {
 }
 
 transformed parameters {
-  matrix[C,N] Ev; // Value
-  matrix[C,N] Ef; // Frequency
-  matrix[C,N] PS; // Perseverence
-  matrix[C,N] p;  // probability of choice
+  vector[C] Ev; // Value
+  vector[C] Ef; // Frequency
+  vector[C] PS; // Perseverence
+  vector[C] p;  // probability of choice
   vector<lower=0,upper=1>[N] a_rew;
   vector<lower=0,upper=1>[N] a_pun;
   vector<lower=0>[N] K;
@@ -58,39 +58,39 @@ transformed parameters {
     if (trial[i] == 1) {
       // initial values at trial 1
       for (deck in 1:C) {
-        Ev[deck,i] = 0;
-        Ef[deck,i] = 0;
-        PS[deck,i] = 1;
-        p [deck,i] = 0.25;
+        Ev[deck] = 0;
+        Ef[deck] = 0;
+        PS[deck] = 1;
+        p [deck] = 0.25;
       }
     } else {
       for (deck in 1:C) {
         if (deck == choice[i-1]) {
           // chosen deck
-          PS[deck, i] = 1.0 / (1 + K[subject[i]]);
+          PS[deck] = 1.0 / (1 + K[subject[i]]);
           if (outcome[i-1] >= 0) {
             // positive, outcome
-            Ev[deck, i] = Ev[deck, i-1] + (a_rew[i] * (outcome[i-1] - Ev[deck, i-1]));
-            Ef[deck, i] = Ef[deck, i-1] + (a_rew[i] * (sign_out[i-1]) - Ef[deck, i-1]);
+            Ev[deck] = Ev[deck] + (a_rew[i] * (outcome[i-1] - Ev[deck]));
+            Ef[deck] = Ef[deck] + (a_rew[i] * (sign_out[i-1]) - Ef[deck]);
           } else {
             // negative, loss
-            Ev[deck, i] = Ev[deck, i-1] + (a_pun[i] * (outcome[i-1] - Ev[deck, i-1]));
-            Ef[deck, i] = Ef[deck, i-1] + (a_pun[i] * (sign_out[i-1]) - Ef[deck, i-1]);
+            Ev[deck] = Ev[deck] + (a_pun[i] * (outcome[i-1] - Ev[deck]));
+            Ef[deck] = Ef[deck] + (a_pun[i] * (sign_out[i-1]) - Ef[deck]);
           }
         } else {
           // the other, unchosen decks
-          Ev[deck, i] = Ev[deck, i-1];
-          PS[deck, i] = PS[deck, i-1] / (1 + K[i]);
+          Ev[deck] = Ev[deck];
+          PS[deck] = PS[deck] / (1 + K[i]);
           if (outcome[i-1] >= 0) {
             // positive, outcome
-            Ef[deck, i] = Ef[deck, i-1] + (a_rew[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck, i-1]);
+            Ef[deck] = Ef[deck] + (a_rew[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
           } else {
             // negative, loss
-            Ef[deck, i] = Ef[deck, i-1] + (a_pun[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck, i-1]);
+            Ef[deck] = Ef[deck] + (a_pun[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
           }
         }
       }
-      p[,i] = softmax((Ev[,i] + Ef[,i]*omega_f[i] + PS[,i]*omega_p[i]));
+      p = softmax((Ev + Ef*omega_f[i] + PS*omega_p[i]));
     }
   }
 }
@@ -120,6 +120,6 @@ model {
   omega_p_subj ~ normal(0, omega_p_sd);
 
   for (t in 2:N) {
-    choice[t] ~ categorical(p[,t]);
+    choice[t] ~ categorical(p);
   }
 }
