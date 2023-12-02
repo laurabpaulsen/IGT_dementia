@@ -16,7 +16,7 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     ax.set_title(parameter_name.title())
 
 
-def plot_descriptive_adequacy(choices, pred_choices, groups, chance_level = None, savepath: Path = None):
+def plot_descriptive_adequacy(choices, pred_choices, groups = None, chance_level = None, savepath: Path = None):
     """
     Plot the descriptive adequacy of the model, that is, how well the model predicts the deck choice of the participants.
 
@@ -48,8 +48,10 @@ def plot_descriptive_adequacy(choices, pred_choices, groups, chance_level = None
     fig, ax = plt.subplots(1, 1, figsize = (5, 5), dpi = 300)
 
     # plot the accuracy as bar plot but color the bars according to the group
-    ax.bar(range(n_sub), percent_correct, color = [f"C{group-1}" for group in groups])
-
+    if groups:
+        ax.bar(range(n_sub), percent_correct, color = [f"C{group-1}" for group in groups])
+    else:
+        ax.bar(range(n_sub), percent_correct)
     # plot the chance level
     if chance_level:
         ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
