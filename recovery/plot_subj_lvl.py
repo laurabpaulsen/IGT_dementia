@@ -8,8 +8,8 @@ import numpy as np
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from plot_fns import plot_recoveries, plot_descriptive_adequacy
-from utils import logit, inv_logit, chance_level
+from utils.plotting import plot_recoveries, plot_descriptive_adequacy
+from utils.helper_functions import chance_level, logit, inv_logit
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils import create_payoff_structure, simulate_ORL_group
+from utils.simulate import simulate_ORL_group
 
 if __name__ in "__main__":
     path = Path(__file__).parent

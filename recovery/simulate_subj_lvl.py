@@ -10,7 +10,7 @@ from pathlib import Path
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils import simulate_ORL
+from utils.simulate import simulate_ORL
 
 
 

@@ -2,7 +2,6 @@ import stan
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from itertools import combinations
 
 
 def recover(data, model_spec, savepath = None):
@@ -17,8 +16,6 @@ def recover(data, model_spec, savepath = None):
     savepath : Path, optional
         Path to save the fitted parameters to. The default is None.
     """
-
-
 
     data_dict = {
         "choice" : np.array(data["choice"]).astype(int),
