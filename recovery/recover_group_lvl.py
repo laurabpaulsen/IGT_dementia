@@ -27,8 +27,6 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
     intercept = np.ones(int(len(data)))
     design_matrix = np.vstack((intercept, data["group"])).T
 
-    print(design_matrix)
-
     data_dict = {
         "choice" : np.array(data["choice"]).astype(int),
         "outcome" : np.array(data["outcome"]),
@@ -63,6 +61,7 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
 if __name__ == "__main__":
     path = Path(__file__).parent
 
+    inpath = path / "simulated" / "group_lvl"
     outpath = path / "fit"
 
     if not outpath.exists():
@@ -77,10 +76,10 @@ if __name__ == "__main__":
  
     for group1, group2 in compare_groups:
         filename1 = f"ORL_simulated_group_{group1}_20_sub.csv"
-        data1 = pd.read_csv(path / "simulated" / filename1)
+        data1 = pd.read_csv(inpath / filename1)
         
         filename2 = f"ORL_simulated_group_{group2}_20_sub.csv"
-        data2 = pd.read_csv(path / "simulated" / filename2)
+        data2 = pd.read_csv(inpath / filename2)
 
         recover_group_level(
             data1 = data1, 
