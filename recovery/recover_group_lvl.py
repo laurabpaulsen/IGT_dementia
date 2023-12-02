@@ -45,7 +45,10 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
 
     # fit the model
     model = stan.build(model_spec, data = data_dict)
-    fit = model.sample(num_chains = 4, num_samples = 1000)
+    fit = model.sample(
+        num_chains = 4, 
+        num_samples = 1000,
+        num_warmup = 1000)
 
     # get the estimated parameters
     df = fit.to_frame()
