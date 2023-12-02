@@ -59,7 +59,7 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load the simulated data
-    n_subs = 2
+    n_subs = 50
     sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
 
     data = pd.read_csv(sim_path)
