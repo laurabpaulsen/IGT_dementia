@@ -21,11 +21,7 @@ def recover(data, model_spec, savepath = None):
         "choice" : np.array(data["choice"]).astype(int),
         "outcome" : np.array(data["outcome"]),
         "sign_out" : np.array(data["sign_out"]),
-        "subject":  np.array(data["sub"]).astype(int),
-        "trial": np.array(data["trial"]).astype(int),
-        "N": int(len(data)), #total number of trials
-        "Nsubj": int(data["sub"].nunique()),
-        "C": 4, # number of decks,
+        "T": int(len(data)), #total number of trials
     }
 
     # fit the model
@@ -56,13 +52,16 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load the simulated data
-    n_subs = 50
+    n_subs = 100
     sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
 
     data = pd.read_csv(sim_path)
 
-    recover(
-        data = data,
-        model_spec = model_spec,
-        savepath = outpath / f"param_rec_subj_lvl.csv"
-        )
+    for sub in range(1, n_subs + 1):
+        tmp_data = data[data["sub"]==sub]
+    
+        recover(
+            data = tmp_data,
+            model_spec = model_spec,
+            savepath = outpath / f"param_rec_subj_{sub}.csv"
+            )
