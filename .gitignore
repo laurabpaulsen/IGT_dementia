@@ -167,3 +167,5 @@ cython_debug/
 
 # data files
 estimation/data/*
+
+trash/*
