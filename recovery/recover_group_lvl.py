@@ -24,18 +24,24 @@ def recover_group_level(data1, data2, model_spec, savepath = None):
 
     data = pd.concat([data1, data2])
 
-    intercept = np.ones(int(len(data)))
-    design_matrix = np.vstack((intercept, data["group"])).T
+    # make a design matrix that includes the intercept and the group variable (one line for each subject)
+    intercept = np.ones(data["sub"].nunique())
 
+    group = np.array(data[data["trial"] == 1]["group"])
+    
+    design_matrix = np.vstack((intercept, group)).T
+
+    # reshape choice and outcome to N_subj x T
+    choice = np.array(data["choice"]).reshape(data["sub"].nunique(), -1)
+    outcome = np.array(data["outcome"]).reshape(data["sub"].nunique(), -1)
+    sign_out = np.array(data["sign_out"]).reshape(data["sub"].nunique(), -1)
     data_dict = {
-        "choice" : np.array(data["choice"]).astype(int),
-        "outcome" : np.array(data["outcome"]),
-        "sign_out" : np.array(data["sign_out"]),
-        "subject":  np.array(data["sub"]).astype(int),
-        "trial": np.array(data["trial"]).astype(int),
-        "N": int(len(data)), #total number of trials
-        "Nsubj": int(data["sub"].nunique()),
-        "C": 4, # number of decks,
+        "choice" : choice.astype(int),
+        "outcome" : outcome,
+        "sign_out" : sign_out,
+        "N": data["sub"].nunique(),
+        "Tsubj": data.groupby("sub").size().values,
+        "T": 100,
         "N_beta": 2,
         "X" : design_matrix
 

@@ -1,125 +1,209 @@
+#include /pre/license.stan
+
 data {
-  int N; // number of trials (total for all subjects)
-  int C; // number of decks, often 4 for IGT
-  int Nsubj; // how many subjects
-  // choice and outcome
-  array[N] int trial;
-  array[N] int subject;
-  array[N] int choice;
-  array[N] real outcome;
-  array[N] real sign_out;
-
-  int N_beta;
-  matrix[N, N_beta] X;
+  int<lower=1> N; // number of subjecs
+  int<lower=1> T; // maxiumum number of trials
+  int<lower=1, upper=T> Tsubj[N]; // trials per subject
+  int choice[N, T]; // choices made
+  real outcome[N, T]; // oucomes
+  real sign_out[N, T]; // sign of outcome
+  int N_beta; // number of model coefficients
+  matrix[N, N_beta] X; // design matrix
 }
-
+transformed data {
+  vector[4] initV;
+  initV  = rep_vector(0.0, 4);
+}
 parameters {
-  // learning rates
-  // hierarchical
-  vector[N_beta] a_rew_betas;
-  vector[N_beta] a_pun_betas;
-  vector[N_beta] K_betas;
-  vector[N_beta] omega_p_betas;
-  vector[N_beta] omega_f_betas;
+// Declare all parameters as vectors for vectorizing
+  // Hyper(group)-parameters
+  matrix[5, N_beta] beta_pr;
+  // vector<lower=0>[5] sigma;
 
-  vector<lower=0,upper=1>[Nsubj] a_pun_subj;
-  vector<lower=0,upper=1>[Nsubj] a_rew_subj;
-  vector<lower=0>[Nsubj] K_subj;
-  vector[Nsubj] omega_f_subj;
-  vector[Nsubj] omega_p_subj;
-
-  real<lower=0> a_rew_sd;
-  real<lower=0> a_pun_sd;
-  real<lower=0> K_sd;
-  real<lower=0> omega_p_sd;
-  real<lower=0> omega_f_sd;
-
+  // Subject-level raw parameters (for Matt trick)
+  vector[N] Arew_pr;
+  vector[N] Apun_pr;
+  vector[N] K_pr;
+  vector[N] omega_f_pr;
+  vector[N] omega_p_pr;
 }
-
 transformed parameters {
-  vector[C] Ev; // Value
-  vector[C] Ef; // Frequency
-  vector[C] PS; // Perseverence
-  vector[C] p;  // probability of choice
-  vector<lower=0,upper=1>[N] a_rew;
-  vector<lower=0,upper=1>[N] a_pun;
-  vector<lower=0>[N] K;
-  vector[N] omega_f;
-  vector[N] omega_p;
-
-
-  K = inv_logit(X * K_betas +  K_subj[subject]) * 5; // restriciting K to be between 0 and 5
-  omega_f = X * omega_f_betas + omega_f_subj[subject];
-  omega_p = X * omega_p_betas + omega_p_subj[subject];
-  a_rew = inv_logit(X * a_rew_betas + a_rew_subj[subject]);
-  a_pun = inv_logit(X * a_pun_betas + a_pun_subj[subject]);
+  // Transform subject-level raw parameters
+  vector<lower=0, upper=1>[N] Arew;
+  vector<lower=0, upper=1>[N] Apun;
+  vector<lower=0, upper=5>[N] K;
+  vector[N]                   omega_f;
+  vector[N]                   omega_p;
 
   for (i in 1:N) {
-    if (trial[i] == 1) {
-      // initial values at trial 1
-      for (deck in 1:C) {
-        Ev[deck] = 0;
-        Ef[deck] = 0;
-        PS[deck] = 1;
-        p [deck] = 0.25;
+    Arew[i] = inv_logit(X * beta_pr[1] + Arew_pr[i]);
+    Apun[i] = inv_logit(X * beta_pr[2] + Apun_pr[i]);
+    K[i]    = inv_logit(X * beta_pr[3] + K_pr[i]) * 5;
+  }
+  omega_f = X * beta_pr[4] + omega_f_pr;
+  omega_p = X * beta_pr[5] + omega_p_pr;
+}
+model {
+  // Hyperparameters
+  beta_pr  ~ normal(0, 1);
+  //sigma[1:3] ~ normal(0, 0.2);
+  //sigma[4:5] ~ cauchy(0, 1.0);
+
+  // individual parameters
+  Arew_pr  ~ normal(0, 1.0);
+  Apun_pr  ~ normal(0, 1.0);
+  K_pr     ~ normal(0, 1.0);
+  omega_f_pr ~ normal(0, 1.0);
+  omega_p_pr ~ normal(0, 1.0);
+
+  for (i in 1:N) {
+    // Define values
+    vector[4] ef;
+    vector[4] ev;
+    vector[4] PEfreq_fic;
+    vector[4] PEval_fic;
+    vector[4] pers;   // perseverance
+    vector[4] util;
+
+    real PEval;
+    real PEfreq;
+    real efChosen;
+    real evChosen;
+    real K_tr;
+
+    // Initialize values
+    ef    = initV;
+    ev    = initV;
+    pers  = initV; // initial pers values
+    util  = initV;
+    K_tr = pow(3, K[i]) - 1;
+
+    for (t in 1:Tsubj[i]) {
+      // softmax choice
+      choice[i, t] ~ categorical_logit( util );
+
+      // Prediction error
+      PEval  = outcome[i,t] - ev[ choice[i,t]];
+      PEfreq = sign_out[i,t] - ef[ choice[i,t]];
+      PEfreq_fic = -sign_out[i,t]/3 - ef;
+
+      // store chosen deck ev
+      efChosen = ef[ choice[i,t]];
+      evChosen = ev[ choice[i,t]];
+
+      if (outcome[i,t] >= 0) {
+        // Update ev for all decks
+        ef += Apun[i] * PEfreq_fic;
+        // Update chosendeck with stored value
+        ef[ choice[i,t]] = efChosen + Arew[i] * PEfreq;
+        ev[ choice[i,t]] = evChosen + Arew[i] * PEval;
+      } else {
+        // Update ev for all decks
+        ef += Arew[i] * PEfreq_fic;
+        // Update chosendeck with stored value
+        ef[ choice[i,t]] = efChosen + Apun[i] * PEfreq;
+        ev[ choice[i,t]] = evChosen + Apun[i] * PEval;
       }
-    } else {
-      for (deck in 1:C) {
-        if (deck == choice[i-1]) {
-          // chosen deck
-          PS[deck] = 1.0 / (1 + K[subject[i]]);
-          if (outcome[i-1] >= 0) {
-            // positive, outcome
-            Ev[deck] = Ev[deck] + (a_rew[i] * (outcome[i-1] - Ev[deck]));
-            Ef[deck] = Ef[deck] + (a_rew[i] * (sign_out[i-1]) - Ef[deck]);
-          } else {
-            // negative, loss
-            Ev[deck] = Ev[deck] + (a_pun[i] * (outcome[i-1] - Ev[deck]));
-            Ef[deck] = Ef[deck] + (a_pun[i] * (sign_out[i-1]) - Ef[deck]);
-          }
-        } else {
-          // the other, unchosen decks
-          Ev[deck] = Ev[deck];
-          PS[deck] = PS[deck] / (1 + K[i]);
-          if (outcome[i-1] >= 0) {
-            // positive, outcome
-            Ef[deck] = Ef[deck] + (a_rew[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
-          } else {
-            // negative, loss
-            Ef[deck] = Ef[deck] + (a_pun[i] * ((-sign_out[i-1])/(C-1)) - Ef[deck]);
-          }
-        }
-      }
-      p = softmax((Ev + Ef*omega_f[i] + PS*omega_p[i]));
+
+      // Perseverance updating
+      pers[ choice[i,t] ] = 1;   // perseverance term
+      pers /= (1 + K_tr);        // decay
+
+      // Utility of expected value and perseverance
+      util  = ev + ef * omega_f[i] + pers * omega_p[i];
     }
   }
 }
 
+generated quantities {
+  // For group level parameters
+  real<lower=0,upper=1> mu_Arew;
+  real<lower=0,upper=1> mu_Apun;
+  real<lower=0,upper=5> mu_K;
+  real                  mu_omega_f;
+  real                  mu_omega_p;
 
+  // For log likelihood calculation
+  real log_lik[N];
 
-model {
-  a_rew_betas ~ normal(0, 10);
-  a_rew_sd ~ normal(0, 10);
+  // For posterior predictive check
+  real y_pred[N,T];
 
-  a_pun_betas ~ normal(0, 10);
-  a_pun_sd ~ normal(0, 10);
+  // Set all posterior predictions to -1 (avoids NULL values)
+  for (i in 1:N) {
+    for (t in 1:T) {
+      y_pred[i,t] = -1;
+    }
+  }
 
-  K_betas ~ normal(0, 10);
-  K_sd ~ normal(0, 10);
+  mu_Arew   = Phi_approx(mu_pr[1]);
+  mu_Apun   = Phi_approx(mu_pr[2]);
+  mu_K      = Phi_approx(mu_pr[3]) * 5;
+  mu_omega_f  = mu_pr[4];
+  mu_omega_p  = mu_pr[5];
 
-  omega_f_betas ~ normal(0, 10);
-  omega_f_sd ~ normal(0, 10);
+  { // local section, this saves time and space
+    for (i in 1:N) {
+      // Define values
+      vector[4] ef;
+      vector[4] ev;
+      vector[4] PEfreq_fic;
+      vector[4] PEval_fic;
+      vector[4] pers;   // perseverance
+      vector[4] util;
 
-  omega_p_betas ~ normal(0, 10);
-  omega_p_sd ~ normal(0, 10);
+      real PEval;
+      real PEfreq;
+      real efChosen;
+      real evChosen;
+      real K_tr;
 
-  a_rew_subj ~ normal(0, a_rew_sd);
-  a_pun_subj   ~ normal(0, a_pun_sd);
-  K_subj       ~ normal(0, K_sd);
-  omega_f_subj ~ normal(0, omega_f_sd);
-  omega_p_subj ~ normal(0, omega_p_sd);
+      // Initialize values
+      log_lik[i] = 0;
+      ef    = initV;
+      ev    = initV;
+      pers  = initV; // initial pers values
+      util  = initV;
+      K_tr = pow(3, K[i]) - 1;
 
-  for (t in 2:N) {
-    choice[t] ~ categorical(p);
+      for (t in 1:Tsubj[i]) {
+        // softmax choice
+        log_lik[i] += categorical_logit_lpmf( choice[i, t] | util );
+
+        // generate posterior prediction for current trial
+        y_pred[i,t] = categorical_rng(softmax(util));
+
+        // Prediction error
+        PEval  = outcome[i,t] - ev[ choice[i,t]];
+        PEfreq = sign_out[i,t] - ef[ choice[i,t]];
+        PEfreq_fic = -sign_out[i,t]/3 - ef;
+
+        // store chosen deck ev
+        efChosen = ef[ choice[i,t]];
+        evChosen = ev[ choice[i,t]];
+
+        if (outcome[i,t] >= 0) {
+          // Update ev for all decks
+          ef += Apun[i] * PEfreq_fic;
+          // Update chosendeck with stored value
+          ef[ choice[i,t]] = efChosen + Arew[i] * PEfreq;
+          ev[ choice[i,t]] = evChosen + Arew[i] * PEval;
+        } else {
+          // Update ev for all decks
+          ef += Arew[i] * PEfreq_fic;
+          // Update chosendeck with stored value
+          ef[ choice[i,t]] = efChosen + Apun[i] * PEfreq;
+          ev[ choice[i,t]] = evChosen + Apun[i] * PEval;
+        }
+
+        // Perseverance updating
+        pers[ choice[i,t] ] = 1;   // perseverance term
+        pers /= (1 + K_tr);        // decay
+
+        // Utility of expected value and perseverance
+        util  = ev + ef * omega_f[i] + pers * omega_p[i];
+      }
+    }
   }
 }
+
