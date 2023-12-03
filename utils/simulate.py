@@ -228,7 +228,15 @@ def simulate_ORL_group(
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
 
-        sub_data = simulate_ORL(payoff, n_trials, sub_a_rew[sub], sub_a_pun[sub], sub_K[sub], sub_omega_f[sub], sub_omega_p[sub])
+        sub_data = simulate_ORL(
+            payoff = payoff, 
+            n_trials = n_trials, 
+            a_rew = sub_a_rew[sub], 
+            a_pun = sub_a_pun[sub], 
+            K = sub_K[sub], 
+            omega_f = sub_omega_f[sub], 
+            omega_p = sub_omega_p[sub]
+            )
 
         choices[sub] = sub_data["choice"]
         outcomes[sub] = sub_data["outcome"]
