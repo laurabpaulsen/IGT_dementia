@@ -68,16 +68,16 @@ if __name__ == "__main__":
     path = Path(__file__).parent
 
     inpath = path / "simulated" / "group_lvl"
-    outpath = path / "fit"
+    outpath = path / "group_lvl" / "fit"
 
     if not outpath.exists():
-        outpath.mkdir()
+        outpath.mkdir(parents = True)
 
     with open(path.parent / "hierachical_IGT_ORL.stan") as f:
         model_spec = f.read()
 
     # make a list of tuples with all combinations of groups (don't want to compare group 1 with group 1 or group 1 with group 2 and group 2 with group 1)
-    n_groups = 20
+    n_groups = 2
     compare_groups = list(combinations(range(1, n_groups + 1), 2))
  
     for group1, group2 in compare_groups:
