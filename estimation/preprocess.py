@@ -34,7 +34,7 @@ def doc2pandas(doc):
     data = data.apply(pd.to_numeric, errors="ignore", downcast="float")
     
     # create outcome column - punishment minus the reward and scale by 100
-    data["outcome"] = (data["Win"] - data["Lose"]) / 100
+    data["outcome"] = (data["Win"] + data["Lose"]) / 100
 
     # change column names
     data = data.rename(columns={"Deck": "choice", "Trial": "trial"})
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         for i, path in enumerate(group_path.iterdir()):
             if path.suffix == ".doc":
                 # load doc 
-                doc = textract.process(path).decode("utf-8")
+                doc = textract.process(str(path)).decode("utf-8")
 
                 # convert doc to pandas dataframe
                 data_tmp = doc2pandas(doc)
