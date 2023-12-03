@@ -3,6 +3,7 @@ Plotting module for the project. Functions are used for both parameter recovery 
 """
 import matplotlib.pyplot as plt
 from pathlib import Path
+import numpy as np
 
 def plot_descriptive_adequacy(choices, pred_choices, groups = None, chance_level = None, savepath: Path = None):
     """
@@ -105,4 +106,49 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     ax.set_xlabel("True")
     ax.set_ylabel("Estimated")
     ax.set_title(parameter_name.title())
+
+
+
+def plot_posteriors_violin(densities, parameter_names, savepath = None):
+    """
+    Plot the posterior densities of a set of parameters as violin plots.
+    
+    Parameters
+    ----------
+    densities : list of np.arrays
+        List of posterior densities.
+    parameter_names : list of str
+        List of parameter names.
+    savepath : Path, optional
+        Path to save the figure to. The default is None.
+    """
+    fig, ax = plt.subplots(1, 1, figsize = (7, 5), dpi = 300)
+
+    # line at 0
+    ax.axhline(0, color = "black", linestyle = "dashed", linewidth = 0.5)
+
+    ax.violinplot(densities, showextrema = False, widths=0.8)
+
+    # plot quantiles as whiskers
+    for i, density in enumerate(densities):
+        quantiles = np.quantile(density, [0.025, 0.975])
+        ax.plot([i+1, i+1], quantiles, color = "midnightblue", linewidth = 2)
+
+    # plot median with a white dot
+    medians = [np.median(density) for density in densities]
+    ax.scatter(range(1, len(medians)+1), medians, color = "white", s = 15, zorder = 3)
+
+
+    ax.set_xticks(range(1, len(parameter_names)+1))
+    ax.set_xticklabels(parameter_names)
+
+    # aesthetics to make the plot look nicer
+    ax.set_ylabel("Posterior density")
+    ax.set_xlabel("Parameter")
+
+    plt.tight_layout()    
+
+    if savepath:
+        plt.savefig(savepath)
+
 
