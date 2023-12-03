@@ -13,18 +13,18 @@ parameters {
   // Subject-level parameters (for Matt trick)
   real<lower=0, upper=1> a_rew;
   real<lower=0, upper=1> a_pun;
-  real<lower=0, upper=5> K;
+  real<lower=0> K;
   real                   omega_f;
   real                   omega_p;
 }
 
 
 model {
-  a_rew     ~ normal(0, 1.0);
-  a_pun     ~ normal(0, 1.0);
-  K         ~ normal(0, 1.0);
-  omega_f   ~ normal(0, 1.0);
-  omega_p   ~ normal(0, 1.0);
+  a_rew     ~ normal(0, 10);
+  a_pun     ~ normal(0, 10);
+  K         ~ normal(0, 10) T[0,];
+  omega_f   ~ normal(0, 10);
+  omega_p   ~ normal(0, 10);
 
   // Define values
     vector[4] ef;
@@ -45,7 +45,7 @@ model {
     ev    = initV;
     pers  = initV; // initial pers values
     util = initV;
-    //K_tr = pow(3, K) - 1;
+    K_tr = pow(3, K) - 1;
 
     for (t in 1:T) {
       choice[t] ~ categorical_logit( util );
@@ -74,8 +74,7 @@ model {
 
       // Perseverance updating
       pers[ choice[t] ] = 1;   // perseverance term
-      //pers /= (1 + K_tr);        // decay
-      pers /= (1 + K);        // decay
+      pers /= (1 + K_tr);        // decay
 
       // Utility of expected value and perseverance
       util  = ev + ef * omega_f + pers * omega_p;
