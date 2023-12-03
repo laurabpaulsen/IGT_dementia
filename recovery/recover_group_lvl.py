@@ -77,7 +77,7 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # make a list of tuples with all combinations of groups (don't want to compare group 1 with group 1 or group 1 with group 2 and group 2 with group 1)
-    n_groups = 2
+    n_groups = 20
     compare_groups = list(combinations(range(1, n_groups + 1), 2))
  
     for group1, group2 in compare_groups:
