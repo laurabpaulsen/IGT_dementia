@@ -4,18 +4,6 @@ Plotting module for the project. Functions are used for both parameter recovery 
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_recovery_ax(ax, true, estimated, parameter_name):
-    """
-    Helper function for plot_recoveries
-    """
-    ax.scatter(true, estimated)
-    x_lims = ax.get_xlim()
-    ax.plot([0, x_lims[1]], [0, x_lims[1]], color = "black", linestyle = "dashed")
-    ax.set_xlabel("True")
-    ax.set_ylabel("Estimated")
-    ax.set_title(parameter_name.title())
-
-
 def plot_descriptive_adequacy(choices, pred_choices, groups = None, chance_level = None, savepath: Path = None):
     """
     Plot the descriptive adequacy of the model, that is, how well the model predicts the deck choice of the participants.
@@ -105,3 +93,16 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     
     if savepath:
         plt.savefig(savepath)
+
+def plot_recovery_ax(ax, true, estimated, parameter_name):
+    """
+    Helper function for plot_recoveries
+    """
+    ax.scatter(true, estimated, s=10)
+    x_lims = ax.get_xlim()
+    y_lims = ax.get_ylim()
+    ax.plot([y_lims[0], x_lims[1]], [y_lims[0], x_lims[1]], color = "black", linestyle = "dashed")
+    ax.set_xlabel("True")
+    ax.set_ylabel("Estimated")
+    ax.set_title(parameter_name.title())
+
