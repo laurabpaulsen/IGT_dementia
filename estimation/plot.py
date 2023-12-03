@@ -59,7 +59,17 @@ if __name__ in "__main__":
     plot_descriptive_adequacy(
         choices, 
         pred_choices, 
-        groups = [1] * AD_data["sub"].nunique()+ [2] * HC_data["sub"].nunique(),
+        groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
+        group_labels = {0: "AD", 1: "HC"},
         chance_level = chance_level(n = 100, p = 0.25),
-        savepath = outpath / "descriptive_adequacy.png"
+        sort_accuracy = True,
+        savepath = outpath / "descriptive_adequacy_sorted.png"
+        )
+    plot_descriptive_adequacy(
+        choices, 
+        pred_choices, 
+        groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
+        group_labels = {0: "AD", 1: "HC"},
+        chance_level = chance_level(n = 100, p = 0.25),
+        savepath = outpath / "descriptive_adequacy_sorted.png"
         )

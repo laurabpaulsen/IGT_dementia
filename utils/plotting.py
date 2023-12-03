@@ -5,7 +5,17 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
 
-def plot_descriptive_adequacy(choices, pred_choices, groups = None, chance_level = None, savepath: Path = None):
+colours = ["steelblue", "lightblue"]
+
+def plot_descriptive_adequacy(
+    choices, 
+    pred_choices, 
+    groups = None, 
+    group_labels:dict = None, 
+    chance_level = None, 
+    sort_accuracy = False,
+    savepath: Path = None
+    ):
     """
     Plot the descriptive adequacy of the model, that is, how well the model predicts the deck choice of the participants.
 
@@ -33,17 +43,33 @@ def plot_descriptive_adequacy(choices, pred_choices, groups = None, chance_level
         sum_choices = len(choices[sub])
         percent_correct.append(sum_correct/sum_choices*100)
 
+    if sort_accuracy:
+        sort_inds = np.argsort(percent_correct)[::-1]
+        percent_correct = [percent_correct[ind] for ind in sort_inds]
+
+        if groups:
+            groups = [groups[ind] for ind in sort_inds]
+
+
     # plot the accuracy
     fig, ax = plt.subplots(1, 1, figsize = (5, 5), dpi = 300)
 
     # plot the accuracy as bar plot but color the bars according to the group
     if groups:
-        ax.bar(range(n_sub), percent_correct, color = [f"C{group-1}" for group in groups])
+        ax.bar(range(1, n_sub + 1), percent_correct, color = [colours[group] for group in groups])
     else:
-        ax.bar(range(n_sub), percent_correct)
+        ax.bar(range(1, n_sub + 1), percent_correct)
     # plot the chance level
+    
     if chance_level:
         ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
+    
+    # add labels for legend
+    if group_labels:
+        for group in group_labels:
+            ax.bar([0], [0], color = colours[group], label = group_labels[group])
+    
+    if chance_level or group_labels:
         ax.legend()
 
     ax.set_xlabel("Subject")
