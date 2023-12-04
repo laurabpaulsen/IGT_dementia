@@ -43,7 +43,7 @@ def fit_group_level(data, model_spec, savepath = None):
     model = stan.build(model_spec, data = data_dict)
     fit = model.sample(
         num_chains = 4, 
-        num_samples = 1000,
+        num_samples = 2000,
         num_warmup = 1000)
 
     # get the estimated parameters
