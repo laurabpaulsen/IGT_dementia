@@ -7,7 +7,7 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy
-from utils.helper_functions import chance_level
+from utils.helper_functions import chance_level, inv_logit, logit
 
 
 if __name__ in "__main__":
@@ -32,7 +32,19 @@ if __name__ in "__main__":
 
     # plot the posterior densities of the parameters
     parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_p", "delta_omega_f"]
-    densities = [np.array(est_data[parameter]) for parameter in parameters]
+
+    densities = []
+    for param in parameters:
+        if param in ["delta_a_rew", "delta_a_pun", "delta_K"]:
+            dens = np.array(inv_logit(est_data[param]))
+            
+            if param == "delta_K":
+                dens = dens * 5
+        else:
+            dens = np.array(est_data[param])
+        
+        densities.append(dens)
+
     parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \omega_{p}$", "$\Delta \omega_{f}$"]
 
     plot_posteriors_violin(densities, parameter_names, savepath = outpath / "posterior_densities.png")
