@@ -34,7 +34,7 @@ def plot_descriptive_adequacy(
     """
 
     # Calculate the correct choices per participant
-    n_sub = len(choices)
+    n_sub = len(pred_choices)
     percent_correct = []
     
     for sub in range(n_sub):
