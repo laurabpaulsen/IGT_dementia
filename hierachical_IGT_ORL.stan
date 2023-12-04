@@ -138,12 +138,6 @@ generated quantities {
     }
   }
 
-  delta_a_rew   = inv_logit(beta_p[2,1]);
-  delta_a_pun   = inv_logit(beta_p[2,2]);
-  delta_K      = inv_logit(beta_p[2,3]) * 5;
-  delta_omega_f  = beta_p[2,4];
-  delta_omega_p  = beta_p[2,5];
-
   { // local section, this saves time and space
     for (i in 1:N) {
       // Define values
