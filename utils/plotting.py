@@ -162,7 +162,7 @@ def plot_posteriors_violin(densities, parameter_names, savepath = None):
 
     # plot median with a white dot
     medians = [np.median(density) for density in densities]
-    ax.scatter(range(1, len(medians)+1), medians, color = "white", s = 15, zorder = 3)
+    ax.scatter(range(1, len(medians)+1), medians, color = "white", s = 5, zorder = 3)
 
 
     ax.set_xticks(range(1, len(parameter_names)+1))
