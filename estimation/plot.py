@@ -22,6 +22,7 @@ if __name__ in "__main__":
     HC_data["sub"] += AD_data["sub"].max() 
 
     data = pd.concat([AD_data, HC_data])
+    n_subjects = data["sub"].nunique()
 
     outpath = path / "fig"
 
@@ -38,7 +39,7 @@ if __name__ in "__main__":
 
     pred_choices = []
     # get the predicted choices
-    for sub in range(1, 41):
+    for sub in range(1, n_subjects+1):
         pred_choices_sub = []
         
         for t in range(1, 101):
@@ -50,9 +51,7 @@ if __name__ in "__main__":
     choices = []
     for sub in data["sub"].unique():
         tmp_data = data[data["sub"] == sub]
-        choices_sub = data["choice"].to_list()
-
-        choices.append(choices_sub)
+        choices.append(tmp_data["choice"].to_list())
 
     
     # plot the descriptive adequacy of the model
@@ -61,15 +60,16 @@ if __name__ in "__main__":
         pred_choices, 
         groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
         group_labels = {0: "AD", 1: "HC"},
-        chance_level = chance_level(n = 100, p = 0.25),
+        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
         sort_accuracy = True,
         savepath = outpath / "descriptive_adequacy_sorted.png"
         )
+
     plot_descriptive_adequacy(
         choices, 
         pred_choices, 
         groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
         group_labels = {0: "AD", 1: "HC"},
-        chance_level = chance_level(n = 100, p = 0.25),
-        savepath = outpath / "descriptive_adequacy_sorted.png"
+        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
+        savepath = outpath / "descriptive_adequacy.png"
         )
