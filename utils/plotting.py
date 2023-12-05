@@ -59,8 +59,8 @@ def plot_descriptive_adequacy(
         ax.bar(range(1, n_sub + 1), percent_correct, color = [colours[group] for group in groups])
     else:
         ax.bar(range(1, n_sub + 1), percent_correct)
-    # plot the chance level
     
+    # plot the chance level
     if chance_level:
         ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
     
@@ -75,11 +75,8 @@ def plot_descriptive_adequacy(
     ax.set_xlabel("Subject")
     ax.set_ylabel("Accuracy [%]")
 
-
-
-    ax.set_xlim(1, n_sub+1)
+    ax.set_xlim(0.5, n_sub + 0.5)
     
-
     plt.tight_layout()
 
     if savepath:
