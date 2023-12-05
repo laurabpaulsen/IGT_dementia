@@ -31,7 +31,8 @@ if __name__ in "__main__":
     summary = fit_group_level(
         data = data,
         model_spec = model_spec,
-        savepath = outpath
+        savepath = outpath,
+        summary = True
     )
 
     # save summary
