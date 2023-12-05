@@ -15,6 +15,25 @@ def parse_n_subj():
     return args.n_subj
 
 
+def parse_n_subj_groups():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--n_subj",
+        "-n",
+        type = int,
+        default = 10,
+        help = "The number of subjects to simulate, recover or plot depending on the script."
+    )
+    parser.add_argument(
+        "--n_groups",
+        "-g",
+        type = int,
+        default = 2,
+        help = "The number of groups to simulate, recover or plot depending on the script."
+    )
+    args = parser.parse_args()
+    return args.n_subj, args.n_trials
+
 def logit(x):
     return np.log(x / (1 - x))
 
