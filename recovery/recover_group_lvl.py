@@ -26,7 +26,7 @@ if __name__ == "__main__":
     n_groups = 20
     compare_groups = list(combinations(range(1, n_groups + 1), 2))
  
-    for group1, group2 in compare_groups:
+    for i, (group1, group2) in enumerate(compare_groups):
         filename1 = f"ORL_simulated_group_{group1}_20_sub.csv"
         data1 = pd.read_csv(inpath / filename1)
         
@@ -45,3 +45,5 @@ if __name__ == "__main__":
             model_spec = model_spec,
             savepath = outpath / f"param_rec_{group1}_{group2}.csv"
         )
+        print(f"Finished comparison {i+1} of {len(compare_groups)}")
+        print(f"Group {group1} vs group {group2}")

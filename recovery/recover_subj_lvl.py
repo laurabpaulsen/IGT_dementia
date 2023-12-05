@@ -36,3 +36,4 @@ if __name__ == "__main__":
             model_spec = model_spec,
             savepath = outpath / f"param_rec_subj_{sub}.csv"
             )
+        print(f"Finished subject {sub} of {n_subs}")
