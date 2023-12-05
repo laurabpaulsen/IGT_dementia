@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
@@ -11,6 +12,7 @@ from utils.fit_model import fit_group_level
 if __name__ in "__main__":
     path = Path(__file__).parent
     outpath = path / "fit" / "param_est_HC_AD.csv"
+    summary_path = path / "fit" / "param_est_HC_AD_summary.csv"
 
     # load data
     AD_data = pd.read_csv(path / "data" / "AD" / "data_AD_all_subjects.csv")
@@ -26,8 +28,11 @@ if __name__ in "__main__":
     with open(path.parent / "hierachical_IGT_ORL.stan") as f:
         model_spec = f.read()
     
-    fit_group_level(
+    summary = fit_group_level(
         data = data,
         model_spec = model_spec,
         savepath = outpath
     )
+
+    # save summary
+    summary.to_csv(summary_path)
