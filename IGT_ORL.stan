@@ -1,4 +1,3 @@
-
 data {
   int<lower=1> T; // number of trials
   array[T] int choice;
@@ -11,20 +10,41 @@ transformed data {
 }
 parameters {
   // Subject-level parameters (for Matt trick)
+  real a_rew_pr;
+  real a_pun_pr;
+  real K_pr;
+  real omega_f_pr;
+  real omega_p_pr;
+
+  // sigma
+  vector<lower=0>[5] sigma;
+}
+transformed parameters{
+  // Subject-level parameters (for Matt trick)
   real<lower=0, upper=1> a_rew;
   real<lower=0, upper=1> a_pun;
   real<lower=0> K;
   real                   omega_f;
   real                   omega_p;
+
+  a_rew     = inv_logit(a_rew_pr);
+  a_pun     = inv_logit(a_pun_pr);
+  K         = inv_logit(K_pr)*5;
+  omega_f   = omega_f_pr;
+  omega_p   = omega_p_pr;
 }
 
-
 model {
-  a_rew     ~ normal(0, 10);
-  a_pun     ~ normal(0, 10);
-  K         ~ normal(0, 10) T[0,];
-  omega_f   ~ normal(0, 10);
-  omega_p   ~ normal(0, 10);
+  // priors
+  sigma[1:3] ~ normal(0, 10);
+  sigma[4:5] ~ cauchy(0, 1.0);
+
+  // individual parameters
+  a_rew_pr  ~ normal(0, sigma[1]);
+  a_pun_pr  ~ normal(0, sigma[2]);
+  K_pr     ~ normal(0, sigma[3]);
+  omega_f_pr ~ normal(0, sigma[4]);
+  omega_p_pr ~ normal(0, sigma[5]);
 
   // Define values
     vector[4] ef;
@@ -79,11 +99,6 @@ model {
       // Utility of expected value and perseverance
       util  = ev + ef * omega_f + pers * omega_p;
     }
-  
-  
-
-
-   
 }
 
 
@@ -99,8 +114,6 @@ generated quantities {
   for (t in 1:T) {
     y_pred[t] = -1;
   }
-
-
 
   { // local section, this saves time and space
 
