@@ -1,12 +1,13 @@
-// Modified from https://github.com/CCS-Lab/hBayesDM/blob/534907d9cbe7101b3109feeec808cdbd380a93f2/commons/stan_files/igt_orl.stan#L4
 
 data {
-  int<lower=1> N;
-  int<lower=1> T;
-  int<lower=1, upper=T> Tsubj[N];
-  array[N, T] int choice;
-  array[N, T] real outcome;
-  array[N, T] real sign_out;
+  int<lower=1> N; // number of subjecs
+  int<lower=1> T; // maxiumum number of trials
+  int<lower=1, upper=T> Tsubj[N]; // trials per subject
+  int choice[N, T]; // choices made
+  real outcome[N, T]; // oucomes
+  real sign_out[N, T]; // sign of outcome
+  int N_beta; // number of model coefficients
+  matrix[N, N_beta] X; // design matrix
 }
 transformed data {
   vector[4] initV;
@@ -15,7 +16,7 @@ transformed data {
 parameters {
 // Declare all parameters as vectors for vectorizing
   // Hyper(group)-parameters
-  vector[5] mu_pr;
+  matrix[N_beta, 5] beta_p;
   vector<lower=0>[5] sigma;
 
   // Subject-level raw parameters (for Matt trick)
@@ -33,26 +34,29 @@ transformed parameters {
   vector[N]                   omega_f;
   vector[N]                   omega_p;
 
-  for (i in 1:N) {
-    a_rew[i] = Phi_approx(mu_pr[1] + sigma[1] * a_rew_pr[i]);
-    a_pun[i] = Phi_approx(mu_pr[2] + sigma[2] * a_pun_pr[i]);
-    K[i]    = Phi_approx(mu_pr[3] + sigma[3] * K_pr[i]) * 5;
-  }
-  omega_f = mu_pr[4] + sigma[4] * omega_f_pr;
-  omega_p = mu_pr[5] + sigma[5] * omega_p_pr;
+  a_rew = inv_logit(X * beta_p[,1] + a_rew_pr);
+  a_pun = inv_logit(X * beta_p[,2] + a_pun_pr);
+  K    = inv_logit(X * beta_p[,3] + K_pr) * 5;
+
+  omega_f = X * beta_p[,4] + omega_f_pr;
+  omega_p = X * beta_p[,5] + omega_p_pr;
+  
 }
 model {
   // Hyperparameters
-  mu_pr  ~ normal(0, 1);
+  for (idx in 1:5){
+    beta_p[,5]  ~ normal(0, 1);
+  }
+  
   sigma[1:3] ~ normal(0, 0.2);
   sigma[4:5] ~ cauchy(0, 1.0);
 
   // individual parameters
-  a_rew_pr  ~ normal(0, 1.0);
-  a_pun_pr  ~ normal(0, 1.0);
-  K_pr     ~ normal(0, 1.0);
-  omega_f_pr ~ normal(0, 1.0);
-  omega_p_pr ~ normal(0, 1.0);
+  a_rew_pr  ~ normal(0, sigma[1]);
+  a_pun_pr  ~ normal(0, sigma[2]);
+  K_pr     ~ normal(0, sigma[3]);
+  omega_f_pr ~ normal(0, sigma[4]);
+  omega_p_pr ~ normal(0, sigma[5]);
 
   for (i in 1:N) {
     // Define values
@@ -113,13 +117,8 @@ model {
   }
 }
 
+
 generated quantities {
-  // For group level parameters
-  real<lower=0,upper=1> mu_a_rew;
-  real<lower=0,upper=1> mu_a_pun;
-  real<lower=0,upper=5> mu_K;
-  real                  mu_omega_f;
-  real                  mu_omega_p;
 
   // For log likelihood calculation
   real log_lik[N];
@@ -133,12 +132,6 @@ generated quantities {
       y_pred[i,t] = -1;
     }
   }
-
-  mu_a_rew   = Phi_approx(mu_pr[1]);
-  mu_a_pun   = Phi_approx(mu_pr[2]);
-  mu_K      = Phi_approx(mu_pr[3]) * 5;
-  mu_omega_f  = mu_pr[4];
-  mu_omega_p  = mu_pr[5];
 
   { // local section, this saves time and space
     for (i in 1:N) {
