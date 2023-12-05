@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.simulate import simulate_ORL
+from utils.helper_functions import parse_n_subj
 
 
 
@@ -23,7 +24,7 @@ if __name__ in "__main__":
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-    n_subjects = 100
+    n_subjects = parse_n_subj()
     df = pd.DataFrame()
     for subj in range(n_subjects):
         a_rew = np.random.uniform(0, 1)

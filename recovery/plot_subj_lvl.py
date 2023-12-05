@@ -10,6 +10,7 @@ import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy
 from utils.helper_functions import chance_level, logit, inv_logit
+from utils.helper_functions import parse_n_subj
 
 
 if __name__ == "__main__":
@@ -22,15 +23,13 @@ if __name__ == "__main__":
         fig_path.mkdir()
 
     # load the simulated data
-    n_subs = 100
+    n_subs = parse_n_subj()
     sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
     sim_data = pd.read_csv(sim_path)
 
     # load the recovered data
     rec_path = path / "fit" / "subj_lvl" 
     
-   
-
     # get the true and recovered parameters
     param_dict = {
         "a_rew_t": [], 
@@ -44,29 +43,30 @@ if __name__ == "__main__":
         "omega_p_r": [],
         "K_r": [],
 
-
-
     }
+
     true_choices = []
     pred_choices = []
+    
     for sub in range(1, n_subs + 1):
         tmp_sim = sim_data[sim_data["sub"] == sub]
         rec_data = pd.read_csv(rec_path / f"param_rec_subj_{sub}.csv")
 
         for param in ["a_rew", "a_pun", "omega_p", "omega_f", "K"]:
-            param_dict[f"{param}_t"].append(tmp_sim[param].unique()[0])
+            suffix_t, suffix_r = "t", "r"
+            param_dict[f"{param}_{suffix_t}"].append(tmp_sim[param].unique()[0])
+            
             recovered_param = rec_data[f"{param}"]
-            param_dict[f"{param}_r"].append(np.mean(recovered_param))
+            if param in ["a_rew", "a_pun", "k"]:
+                recovered_param = inv_logit(recovered_param)
+                if param == "k":
+                    recovered_param = recovered_param * 5
+            param_dict[f"{param}_{suffix_r}"].append(np.mean(recovered_param))
 
-        # append choices for descriptive adequacy plot
         true_choices.append(tmp_sim["choice"].to_list())
 
-        pred_choices_sub = []
-        for t in range(1, 101):
-            pred_choices_sub.append(mode(rec_data[f"y_pred.{t}"]))
-
+        pred_choices_sub = [mode(rec_data[f"y_pred.{t}"]) for t in range(1, 101)]
         pred_choices.append(pred_choices_sub)
-
 
     # plot the recovery of the parameters
     plot_recoveries(
