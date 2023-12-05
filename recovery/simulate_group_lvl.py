@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.simulate import simulate_ORL_group
+from utils.helper_functions import parse_n_subj_groups
 
 if __name__ in "__main__":
     path = Path(__file__).parent
@@ -20,8 +21,7 @@ if __name__ in "__main__":
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-    n_groups = 20
-    n_subjects = 20
+    n_subjects, n_groups = parse_n_subj_groups()
 
     for group in range(n_groups):
         mu_a_rew = np.random.uniform(0, 1)
