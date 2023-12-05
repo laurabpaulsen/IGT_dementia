@@ -119,11 +119,6 @@ model {
 
 
 generated quantities {
-  real<lower=0,upper=1> delta_a_rew;
-  real<lower=0,upper=1> delta_a_pun;
-  real<lower=0,upper=5> delta_K;
-  real                  delta_omega_f;
-  real                  delta_omega_p;
 
   // For log likelihood calculation
   real log_lik[N];
