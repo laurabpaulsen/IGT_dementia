@@ -57,10 +57,7 @@ if __name__ == "__main__":
             param_dict[f"{param}_{suffix_t}"].append(tmp_sim[param].unique()[0])
             
             recovered_param = rec_data[f"{param}"]
-            if param in ["a_rew", "a_pun", "k"]:
-                recovered_param = inv_logit(recovered_param)
-                if param == "k":
-                    recovered_param = recovered_param * 5
+            
             param_dict[f"{param}_{suffix_r}"].append(np.mean(recovered_param))
 
         true_choices.append(tmp_sim["choice"].to_list())
