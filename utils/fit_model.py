@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 import stan
+import arviz as az
 
-def fit_group_level(data, model_spec, savepath = None):
+def fit_group_level(data, model_spec, savepath = None, summary = False):
     """
     Generate synthetic data and fit the model to it. Check how well the parameters are recovered by plotting median against the true parameters.
 
@@ -52,6 +53,9 @@ def fit_group_level(data, model_spec, savepath = None):
     # save the data
     if savepath:
         df.to_csv(savepath, index = False)
+
+    if summary:
+        return az.summary(fit)
 
 
 
