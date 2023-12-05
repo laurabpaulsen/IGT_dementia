@@ -16,8 +16,6 @@ parameters {
   real omega_f_pr;
   real omega_p_pr;
 
-  // sigma
-  vector<lower=0>[5] sigma;
 }
 transformed parameters{
   // Subject-level parameters (for Matt trick)
@@ -35,16 +33,12 @@ transformed parameters{
 }
 
 model {
-  // priors
-  sigma[1:3] ~ normal(0, 10);
-  sigma[4:5] ~ cauchy(0, 1.0);
-
   // individual parameters
-  a_rew_pr  ~ normal(0, sigma[1]);
-  a_pun_pr  ~ normal(0, sigma[2]);
-  K_pr     ~ normal(0, sigma[3]);
-  omega_f_pr ~ normal(0, sigma[4]);
-  omega_p_pr ~ normal(0, sigma[5]);
+  a_rew_pr  ~ normal(0, 10); // sigma was used before
+  a_pun_pr  ~ normal(0, 10);
+  K_pr     ~ normal(0, 10);
+  omega_f_pr ~ normal(0, 10);
+  omega_p_pr ~ normal(0, 10);
 
   // Define values
     vector[4] ef;
