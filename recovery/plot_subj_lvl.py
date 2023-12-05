@@ -30,20 +30,12 @@ if __name__ == "__main__":
     # load the recovered data
     rec_path = path / "fit" / "subj_lvl" 
     
+    parameters = ["a_rew", "a_pun", "omega_p", "omega_f", "K"]
+    
     # get the true and recovered parameters
     param_dict = {
-        "a_rew_t": [], 
-        "a_pun_t": [],
-        "omega_f_t": [],
-        "omega_p_t": [],
-        "K_t": [],
-        "a_rew_r": [], 
-        "a_pun_r": [],
-        "omega_f_r": [],
-        "omega_p_r": [],
-        "K_r": [],
-
-    }
+        f"{param}_{suffix}": [] for param in parameters for suffix in ["t", "r"]
+        }
 
     true_choices = []
     pred_choices = []
@@ -52,7 +44,7 @@ if __name__ == "__main__":
         tmp_sim = sim_data[sim_data["sub"] == sub]
         rec_data = pd.read_csv(rec_path / f"param_rec_subj_{sub}.csv")
 
-        for param in ["a_rew", "a_pun", "omega_p", "omega_f", "K"]:
+        for param in parameters:
             suffix_t, suffix_r = "t", "r"
             param_dict[f"{param}_{suffix_t}"].append(tmp_sim[param].unique()[0])
             
