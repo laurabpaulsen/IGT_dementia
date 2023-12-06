@@ -14,7 +14,6 @@ from utils.simulate import simulate_ORL
 from utils.helper_functions import parse_n_subj
 
 
-
 if __name__ in "__main__":
     path = Path(__file__).parent
 
@@ -45,11 +44,13 @@ if __name__ in "__main__":
         )
     
         tmp_df = pd.DataFrame.from_dict(data)
+        
         tmp_df["a_rew"] = a_rew
         tmp_df["a_pun"] = a_pun
         tmp_df["K"] = K
         tmp_df["omega_f"] = omega_f
         tmp_df["omega_p"] = omega_p
+        tmp_df["theta"] = theta
         tmp_df["sub"] = subj + 1
 
         df = pd.concat([df, tmp_df])

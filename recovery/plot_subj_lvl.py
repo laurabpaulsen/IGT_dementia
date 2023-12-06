@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # load the recovered data
     rec_path = path / "fit" / "subj_lvl" 
     
-    parameters = ["a_rew", "a_pun", "omega_p", "omega_f", "K"]
+    parameters = ["a_rew", "a_pun", "omega_p", "omega_f", "K", "theta"]
     
     # get the true and recovered parameters
     param_dict = {
@@ -59,9 +59,9 @@ if __name__ == "__main__":
 
     # plot the recovery of the parameters
     plot_recoveries(
-        trues = [param_dict["a_rew_t"],param_dict["a_pun_t"], param_dict["K_t"], param_dict["omega_f_t"], param_dict["omega_p_t"]],
-        estimateds = [param_dict["a_rew_r"],param_dict["a_pun_r"], param_dict["K_r"], param_dict["omega_f_r"], param_dict["omega_p_r"]],
-        parameter_names = [r"$A_{rew}$", r"$A_{pun}$", r"$K$", r"$\omega_f$", r"$\omega_p$"],
+        trues = [param_dict["a_rew_t"],param_dict["a_pun_t"], param_dict["K_t"], param_dict["omega_f_t"], param_dict["omega_p_t"], param_dict["theta_t"]],
+        estimateds = [param_dict["a_rew_r"],param_dict["a_pun_r"], param_dict["K_r"], param_dict["omega_f_r"], param_dict["omega_p_r"], param_dict["theta_r"]],
+        parameter_names = ["$A_{rew}$", "$A_{pun}$", r"$K$", "$\omega_f$", "$\omega_p$", "$\theta$"],
         savepath = fig_path / "subj_lvl_parameter_recovery_ORL.png"
     )
 
