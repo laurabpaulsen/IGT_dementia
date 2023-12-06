@@ -61,7 +61,7 @@ if __name__ == "__main__":
     plot_recoveries(
         trues = [param_dict["a_rew_t"],param_dict["a_pun_t"], param_dict["K_t"], param_dict["omega_f_t"], param_dict["omega_p_t"], param_dict["theta_t"]],
         estimateds = [param_dict["a_rew_r"],param_dict["a_pun_r"], param_dict["K_r"], param_dict["omega_f_r"], param_dict["omega_p_r"], param_dict["theta_r"]],
-        parameter_names = ["$A_{rew}$", "$A_{pun}$", r"$K$", "$\omega_f$", "$\omega_p$", "$\theta$"],
+        parameter_names = ["$A_{rew}$", "$A_{pun}$", "$K$", "$\omega_f$", "$\omega_p$", "$\theta$"],
         savepath = fig_path / "subj_lvl_parameter_recovery_ORL.png"
     )
 
