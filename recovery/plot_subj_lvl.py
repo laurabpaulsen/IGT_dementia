@@ -69,6 +69,6 @@ if __name__ == "__main__":
     plot_descriptive_adequacy(
         choices = true_choices,
         pred_choices = pred_choices,
-        chance_level = chance_level(100, p = 0.25)*100,
+        chance_level = chance_level(100, p = 0.25, alpha = 0.05)*100,
         savepath =fig_path / "subj_lvl_descriptive_ORL.png"
     )
