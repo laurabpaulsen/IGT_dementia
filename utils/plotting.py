@@ -128,7 +128,7 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     ax.plot([y_lims[0], x_lims[1]], [y_lims[0], x_lims[1]], color = "black", linestyle = "dashed")
     ax.set_xlabel("True")
     ax.set_ylabel("Estimated")
-    ax.set_title(parameter_name.title())
+    ax.set_title(parameter_name)
 
 
 
