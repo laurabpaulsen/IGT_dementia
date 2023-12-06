@@ -31,6 +31,7 @@ if __name__ in "__main__":
         mu_K = np.random.uniform(0, 5)
         mu_omega_f = np.random.uniform(0, 5)
         mu_omega_p = np.random.uniform(0, 5)
+        mu_theta = np.random.uniform(0, 10)
 
 
         data = simulate_ORL_group(
@@ -40,11 +41,13 @@ if __name__ in "__main__":
             mu_K = mu_K,
             mu_omega_f = mu_omega_f,
             mu_omega_p = mu_omega_p,
+            mu_theta = mu_theta
             sigma_a_rew = 0.05,
             sigma_a_pun = 0.05,
             sigma_K = 0.05,
             sigma_omega_f = 0.05,
-            sigma_omega_p = 0.05
+            sigma_omega_p = 0.05,
+            sigma_theta = 0.05
             )
     
         df = pd.DataFrame.from_dict(data)
@@ -53,6 +56,7 @@ if __name__ in "__main__":
         df["mu_K"] = mu_K
         df["mu_omega_f"] = mu_omega_f
         df["mu_omega_p"] = mu_omega_p
+        df["mu_theta"] = mu_theta
 
 
         df.to_csv(output_path / f"ORL_simulated_group_{group+1}_{n_subjects}_sub.csv", index=False)
