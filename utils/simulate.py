@@ -74,6 +74,7 @@ def simulate_ORL(
         K : float,
         omega_f : float,
         omega_p : float, 
+        theta : float,
         payoff : np.ndarray = create_payoff_structure(), 
         n_trials : int = 100, 
 
@@ -97,6 +98,8 @@ def simulate_ORL(
         Weighting parameter for expected frequencies.
     omega_p : float
         Weighting parameter for perseveration.
+    theta : float
+        Inverse temperature parameter.
     
     Returns
     -------
@@ -118,7 +121,7 @@ def simulate_ORL(
         valence = ev + omega_f * ef + omega_p * perseverance
         
         # probability of choosing each deck (softmax)
-        exp_p = np.exp(valence)
+        exp_p = np.exp(valence*theta)
         p = exp_p / np.sum(exp_p)
 
         # choice
@@ -177,7 +180,9 @@ def simulate_ORL_group(
         mu_omega_f : float = 0.7,
         sigma_omega_f : float = 0.05,
         mu_omega_p : float = 0.7,
-        sigma_omega_p : float = 0.05
+        sigma_omega_p : float = 0.05,
+        mu_theta : float = 1.,
+        sigma_theta : float = 0.05
         ):
     """
     Simulates behavioural data using the payoff structure and the ORL model given a group level mean
@@ -198,7 +203,7 @@ def simulate_ORL_group(
 
     choices, outcomes, sign_out, trial = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
     sub_a_rew, sub_a_pun, sub_K = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
-    sub_omega_f, sub_omega_p = np.zeros(n_subjects), np.zeros(n_subjects)
+    sub_omega_f, sub_omega_p, sub_theta = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
 
 
     for sub in range(n_subjects):
@@ -216,6 +221,7 @@ def simulate_ORL_group(
         sub_K[sub] = np.random.normal(mu_K, sigma_K)
         sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
         sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
         # check that the parameters are < 0 and k between 0 and 5
         while sub_K[sub] < 0 or sub_K[sub] > 5:
@@ -224,6 +230,8 @@ def simulate_ORL_group(
             sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
         while sub_omega_p[sub] < 0:
             sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        while sub_theta[sub] < 0:
+            sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
@@ -235,7 +243,8 @@ def simulate_ORL_group(
             a_pun = sub_a_pun[sub], 
             K = sub_K[sub], 
             omega_f = sub_omega_f[sub], 
-            omega_p = sub_omega_p[sub]
+            omega_p = sub_omega_p[sub],
+            theta = sub_theta[sub]
             )
 
         choices[sub] = sub_data["choice"]

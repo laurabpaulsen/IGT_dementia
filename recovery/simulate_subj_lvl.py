@@ -33,13 +33,15 @@ if __name__ in "__main__":
         K = np.random.uniform(0, 5)
         omega_f = np.random.uniform(-2, 5)
         omega_p = np.random.uniform(-2, 5)
+        theta = np.random.uniform(0, 10)
 
         data = simulate_ORL(
             a_rew = a_rew,
             a_pun = a_pun,
             K = K,
             omega_f = omega_f,
-            omega_p = omega_p
+            omega_p = omega_p,
+            theta = theta
         )
     
         tmp_df = pd.DataFrame.from_dict(data)

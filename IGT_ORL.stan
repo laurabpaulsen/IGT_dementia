@@ -15,6 +15,7 @@ parameters {
   real K_pr;
   real omega_f_pr;
   real omega_p_pr;
+  real theta_pr;
 
 }
 transformed parameters{
@@ -24,21 +25,24 @@ transformed parameters{
   real<lower=0> K;
   real                   omega_f;
   real                   omega_p;
+  real<lower=0>          theta;
 
   a_rew     = inv_logit(a_rew_pr);
   a_pun     = inv_logit(a_pun_pr);
   K         = inv_logit(K_pr)*5;
   omega_f   = omega_f_pr;
   omega_p   = omega_p_pr;
+  theta     = inv_logit(theta_pr)*10;
 }
 
 model {
   // individual parameters
-  a_rew_pr  ~ normal(0, 10); // sigma was used before
-  a_pun_pr  ~ normal(0, 10);
-  K_pr     ~ normal(0, 10);
-  omega_f_pr ~ normal(0, 10);
-  omega_p_pr ~ normal(0, 10);
+  a_rew_pr  ~ normal(0, 5); // sigma was used before
+  a_pun_pr  ~ normal(0, 5);
+  K_pr     ~ normal(0, 5);
+  omega_f_pr ~ normal(0, 5);
+  omega_p_pr ~ normal(0, 5);
+  theta_pr ~ normal(0, 5);
 
   // Define values
     vector[4] ef;
@@ -91,7 +95,7 @@ model {
       pers /= (1 + K_tr);        // decay
 
       // Utility of expected value and perseverance
-      util  = ev + ef * omega_f + pers * omega_p;
+      util  = (ev + ef * omega_f + pers * omega_p)*theta;
     }
 }
 
@@ -168,7 +172,7 @@ generated quantities {
         pers /= (1 + K_tr);        // decay
 
         // Utility of expected value and perseverance
-        util  = ev + ef * omega_f + pers * omega_p;
+        util  = (ev + ef * omega_f + pers * omega_p)*theta;
       }
     }
   }
