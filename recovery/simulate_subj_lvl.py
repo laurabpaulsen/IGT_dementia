@@ -34,7 +34,7 @@ if __name__ in "__main__":
         K = np.random.uniform(0, 5)
         omega_f = np.random.uniform(-2, 5)
         omega_p = np.random.uniform(-2, 5)
-        theta = np.random.uniform(0, 10)
+        theta = np.random.uniform(0, 5)
 
         data = simulate_ORL(
             a_rew = a_rew,
