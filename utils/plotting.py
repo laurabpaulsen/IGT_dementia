@@ -63,6 +63,17 @@ def plot_descriptive_adequacy(
     # plot the chance level
     if chance_level:
         ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
+
+    # plot the mean accuracy
+    ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
+    
+    # plot the mean for each group
+    if groups:
+        for group in group_labels:
+            group_inds = [ind for ind, g in enumerate(groups) if g == group]
+            group_mean = np.mean([percent_correct[ind] for ind in group_inds])
+            ax.axhline(group_mean, color = colours[group], linestyle = "solid", label = f"{group_labels[group]} mean accuarcy", linewidth = 0.5)
+
     
     # add labels for legend
     if group_labels:
@@ -122,10 +133,21 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     """
     Helper function for plot_recoveries
     """
-    ax.scatter(true, estimated, s=10)
+    ax.scatter(true, estimated, s=10, color = "steelblue")
     x_lims = ax.get_xlim()
     y_lims = ax.get_ylim()
     ax.plot([y_lims[0], x_lims[1]], [y_lims[0], x_lims[1]], color = "black", linestyle = "dashed")
+
+    # plot the correlation between the true and estimated parameters
+    # get intercept and slope of the regression line
+    corr = np.corrcoef(true, estimated)[0, 1]
+    intercept = np.mean(estimated) - corr*np.mean(true)
+
+
+    # plot a correlation line
+    lin_space = np.linspace(x_lims[0], x_lims[1], 100)
+    ax.plot(lin_space, intercept + corr*lin_space, color = "steelblue", linestyle = "solid", linewidth = 0.5)
+
     ax.set_xlabel("True")
     ax.set_ylabel("Estimated")
     ax.set_title(parameter_name)
