@@ -3,6 +3,38 @@ import numpy as np
 import argparse
 from scipy.stats import norm
 
+def maximum_posterior_density(posterior: np.array) -> float:
+    """
+    Calculates the maximum posterior density for a given posterior distribution.
+
+    Parameters
+    ----------
+    posterior : np.array
+        The posterior samples
+
+    Returns
+    -------
+    maximum_posterior_density : float
+        The maximum posterior density.
+    """
+    
+    """
+    Andreas' R code:
+    MPD <- function(x) {
+        density(x)$x[which(density(x)$y==max(density(x)$y))]
+    }"""
+
+    # get the density of the posterior
+    density = np.histogram(posterior, bins = 100, density = True)
+    
+    # get the index of the maximum density
+    max_index = np.argmax(density[0])
+
+    # get the maximum posterior density
+    maximum_posterior_density = density[1][max_index]
+    
+    return maximum_posterior_density
+
 def probit(p):
     return norm.ppf(p)
 
