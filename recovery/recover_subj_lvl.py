@@ -13,8 +13,10 @@ from utils.helper_functions import parse_n_subj
 
 if __name__ == "__main__":
     path = Path(__file__).parent
+    
+    n_subs = parse_n_subj()
 
-    outpath = path / "fit" / "subj_lvl"
+    outpath = path / "fit" / "subj_lvl" / f"{n_subs}"
 
     if not outpath.exists():
         outpath.mkdir(parents = True)
@@ -23,8 +25,8 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # load the simulated data
-    n_subs = parse_n_subj()
-    sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
+
+    sim_path = path / "simulated" / "subj_lvl" / f"{n_subs}"/ f"ORL.csv"
 
     data = pd.read_csv(sim_path)
 

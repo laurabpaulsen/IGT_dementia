@@ -24,11 +24,11 @@ if __name__ == "__main__":
 
     # load the simulated data
     n_subs = parse_n_subj()
-    sim_path = path / "simulated" / "subj_lvl" / f"ORL_{n_subs}_sub.csv"
+    sim_path = path / "simulated" / "subj_lvl" / f"{n_subs}" / "ORL.csv"
     sim_data = pd.read_csv(sim_path)
 
     # load the recovered data
-    rec_path = path / "fit" / "subj_lvl" 
+    rec_path = path / "fit" / "subj_lvl" / f"{n_subs}"
     
     parameters = ["a_rew", "a_pun", "omega_p", "omega_f", "K", "theta"]
     
@@ -47,9 +47,9 @@ if __name__ == "__main__":
         for param in parameters:
             suffix_t, suffix_r = "t", "r"
             param_dict[f"{param}_{suffix_t}"].append(tmp_sim[param].unique()[0])
-            
+                
             recovered_param = rec_data[f"{param}"]
-            
+                
             param_dict[f"{param}_{suffix_r}"].append(np.mean(recovered_param))
 
         true_choices.append(tmp_sim["choice"].to_list())
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     plot_recoveries(
         trues = [param_dict["a_rew_t"],param_dict["a_pun_t"], param_dict["K_t"], param_dict["omega_f_t"], param_dict["omega_p_t"], param_dict["theta_t"]],
         estimateds = [param_dict["a_rew_r"],param_dict["a_pun_r"], param_dict["K_r"], param_dict["omega_f_r"], param_dict["omega_p_r"], param_dict["theta_r"]],
-        parameter_names = ["$A_{rew}$", "$A_{pun}$", "$K$", "$\omega_f$", "$\omega_p$", "$\theta$"],
+        parameter_names = ["$A_{rew}$", "$A_{pun}$", "$K$", "$\omega_f$", "$\omega_p$", "$\\theta$"],
         savepath = fig_path / "subj_lvl_parameter_recovery_ORL.png"
     )
 

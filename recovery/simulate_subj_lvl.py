@@ -6,6 +6,7 @@ If the script is run directly, it will generate the data and save it to a csv fi
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 # local imports
 import sys
@@ -16,14 +17,15 @@ from utils.helper_functions import parse_n_subj
 
 if __name__ in "__main__":
     path = Path(__file__).parent
+        
+    n_subjects = parse_n_subj()
 
     # output path for simulated data
-    output_path = path / "simulated" / "subj_lvl"
+    output_path = path / "simulated" / "subj_lvl" / f"{n_subjects}"
 
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
-    
-    n_subjects = parse_n_subj()
+
     df = pd.DataFrame()
     for subj in range(n_subjects):
         a_rew = np.random.uniform(0, 1)
@@ -55,7 +57,7 @@ if __name__ in "__main__":
 
         df = pd.concat([df, tmp_df])
 
-    df.to_csv(output_path / f"ORL_{n_subjects}_sub.csv", index=False)
+    df.to_csv(output_path / f"ORL.csv", index=False)
 
 
     
