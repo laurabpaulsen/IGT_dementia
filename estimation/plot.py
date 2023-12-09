@@ -7,7 +7,7 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy
-from utils.helper_functions import chance_level, inv_logit, logit
+from utils.helper_functions import chance_level, probit
 
 
 if __name__ in "__main__":
@@ -16,6 +16,19 @@ if __name__ in "__main__":
     # load posterior and behavioral data
     inpath = path / "fit" / "param_est_HC_AD.csv"
     est_data = pd.read_csv(inpath)
+
+    # rename the columns
+    est_data.rename(
+        columns = {
+            "beta_p.2.1" : "delta_a_rew",
+            "beta_p.2.2" : "delta_a_pun",
+            "beta_p.2.3" : "delta_K",
+            "beta_p.2.4" : "delta_theta"
+            "beta_p.2.5" : "delta_omega_f",
+            "beta_p.2.6" : "delta_omega_p",
+        },
+        inplace = True
+    )
 
     AD_data = pd.read_csv(path / "data" / "AD" / "data_AD_all_subjects.csv")
     HC_data = pd.read_csv(path / "data" / "HC" / "data_HC_all_subjects.csv")
@@ -31,21 +44,21 @@ if __name__ in "__main__":
 
 
     # plot the posterior densities of the parameters
-    parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_p", "delta_omega_f"]
+    parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_p", "delta_omega_f"]
 
     densities = []
     for param in parameters:
-        if param in ["delta_a_rew", "delta_a_pun", "delta_K"]:
-            dens = np.array(inv_logit(est_data[param]))
+        if param in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta"]:
+            dens = np.array(probit(est_data[param]))
             
-            if param == "delta_K":
+            if param in ["delta_K", "delta_theta"]:
                 dens = dens * 5
         else:
             dens = np.array(est_data[param])
         
         densities.append(dens)
 
-    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \omega_{p}$", "$\Delta \omega_{f}$"]
+    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \\theta$", "$\Delta \omega_{p}$", "$\Delta \omega_{f}$"]
 
     plot_posteriors_violin(densities, parameter_names, savepath = outpath / "posterior_densities.png")
 
