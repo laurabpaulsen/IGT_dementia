@@ -9,8 +9,8 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy
-from utils.helper_functions import chance_level, logit, inv_logit
-from utils.helper_functions import parse_n_subj
+from utils.helper_functions import chance_level, parse_n_subj
+
 
 
 if __name__ == "__main__":
@@ -69,6 +69,6 @@ if __name__ == "__main__":
     plot_descriptive_adequacy(
         choices = true_choices,
         pred_choices = pred_choices,
-        chance_level = chance_level(100, p = 0.25, alpha = 0.05)*100,
+        chance_level = chance_level(100, p = 1/4, alpha = 0.05)*100,
         savepath =fig_path / "subj_lvl_descriptive_ORL.png"
     )
