@@ -115,48 +115,54 @@ def simulate_ORL(
     ev = np.zeros(4)
     perseverance = np.zeros(4)
     ef = np.zeros(4)
+    util = np.zeros(4)
 
     # looping over trials
     for t in range(n_trials):
-        valence = ev + omega_f * ef + omega_p * perseverance
-        
         # probability of choosing each deck (softmax)
-        exp_p = np.exp(valence*theta)
+        exp_p = np.exp(util*theta)
         p = exp_p / np.sum(exp_p)
 
         # choice
         choices[t] = np.random.choice(4, p=p)
-        
+
         # outcome
         outcomes[t] = payoff[t, int(choices[t])]
 
         # get the sign of the reward
         sign_out[t] = np.sign(outcomes[t])
 
-        # update perseveration
-        # set perseveration to 1 if the deck was chosen
-        perseverance[choices[t]] = 1
-        perseverance = perseverance / (1 + K)
+
+        ## prediction error
+        PEval = outcomes[t] - ev[choices[t]]
+        PEfreq = sign_out[t] - ef[choices[t]]
+        PEfreq_fic = -sign_out[t]/3 - ef[choices[t]]
+
+        # store chosen deck expected value
+        ef_chosen = ef[choices[t]]
+        ev_chosen = ev[choices[t]]
+
+        if outcomes[t] >= 0:
+            # update ev for all decks
+            ef = ef + a_pun * PEfreq_fic
+
+            # update ev for chosen deck using the stored value
+            ef[choices[t]] = ef_chosen + a_rew * PEfreq
+            ev[choices[t]] = ev_chosen + a_rew * PEval
+        else: # if the outcome is negative
+            # update ev for all decks
+            ef = ef + a_rew * PEfreq_fic
+
+            # update ev for chosen deck using the stored value
+            ef[choices[t]] = ef_chosen + a_pun * PEfreq
+            ev[choices[t]] = ev_chosen + a_pun * PEval
         
-        # update expected value for chosen deck
-        if sign_out[t] == 1:
-            ev[choices[t]] = ev[choices[t]] + a_rew * (outcomes[t] - ev[choices[t]])
-        else:
-            ev[choices[t]] = ev[choices[t]] + a_pun * (outcomes[t] - ev[choices[t]])
-        
-        # update expected frequency for chosen deck
-        if sign_out[t] == 1:
-            ef[choices[t]] = ef[choices[t]] + a_rew * (1 - ef[choices[t]])
-        else:
-            ef[choices[t]] = ef[choices[t]] + a_pun * (1 - ef[choices[t]])
-        
-        # update expected frequency for unchosen decks (fictive frequencies)
-        for d in range(4):
-            if d != int(choices[t]):
-                if sign_out[t] == 1:
-                    ef[d] = ef[d] + a_rew * (sign_out[t]/3 * -ef[d])
-                else:
-                    ef[d] = ef[d] + a_pun * (sign_out[t]/3 * -ef[d])
+        # perseverance update  
+        perseverance[choices[t]] = 1 # set the chosen deck to 1
+        perseverance = perseverance / (1 + K)    
+
+        # update utility
+        util = ev + omega_f * ef + omega_p * perseverance
 
     data = {
         "choice" : choices.astype(int) + 1,
