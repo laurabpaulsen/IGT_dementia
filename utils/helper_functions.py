@@ -1,6 +1,10 @@
 from scipy.stats import binom
 import numpy as np
 import argparse
+from scipy.stats import norm
+
+def probit(p):
+    return norm.ppf(p)
 
 def parse_n_subj():
     parser = argparse.ArgumentParser()
