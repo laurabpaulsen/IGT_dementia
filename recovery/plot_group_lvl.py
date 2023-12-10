@@ -1,18 +1,20 @@
 import pandas as pd
 from pathlib import Path
 import re
+import numpy as np
+from math import erf, sqrt
+
+from scipy.stats import norm
 
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_recoveries, plot_descriptive_adequacy
+from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
 from utils.helper_functions import logit, inv_logit, chance_level, parse_n_subj_groups
 
-# load probit function
-from scipy.stats import norm
-
-def probit(p):
-    return norm.ppf(p)
+def probit(x):
+    #'Cumulative distribution function for the standard normal distribution'
+    return (1.0 + erf(x / sqrt(2.0))) / 2.0
 
 def load_simulated(path : Path) -> dict:
 
@@ -21,7 +23,7 @@ def load_simulated(path : Path) -> dict:
     for file in path.glob("*.csv"):
         data_tmp = pd.read_csv(file)
 
-        data[int(file.stem.split("_")[-3])] = {
+        data[int(file.stem.split("_")[-1])] = {
             "data" : data_tmp, 
             "mu_a_rew" : data_tmp["mu_a_rew"].unique()[0],
             "mu_a_pun" : data_tmp["mu_a_pun"].unique()[0],
@@ -47,20 +49,59 @@ def load_recovered(path : Path) -> dict:
         group1 = int(re.split("_", f.stem)[-2])
         group2 = int(re.split("_", f.stem)[-1])
         
+        # get all columns that start with y_pred
+        y_pred_cols = [col for col in data_tmp.columns if col.startswith("y_pred")]
 
         data[f.stem] = {
             #"data" : data_tmp, 
             "group1" : group1,
             "group2" : group2,
-            "delta_a_rew" : data_tmp["beta_p.2.1"].mean(),
-            "delta_a_pun" : data_tmp["beta_p.2.2" ].mean(),
-            "delta_K" : data_tmp["beta_p.2.3"].mean(),
-            "delta_theta" : data_tmp[ "beta_p.2.4"].mean(),
-            "delta_omega_f" : data_tmp[ "beta_p.2.5"].mean(),
-            "delta_omega_p" : data_tmp[ "beta_p.2.6"].mean(),
+            "delta_a_rew" : data_tmp["beta_p.2.1"],
+            "delta_a_pun" : data_tmp["beta_p.2.2" ],
+            "delta_K" : data_tmp["beta_p.2.3"],
+            "delta_theta" : data_tmp[ "beta_p.2.4"],
+            "delta_omega_f" : data_tmp[ "beta_p.2.5"],
+            "delta_omega_p" : data_tmp[ "beta_p.2.6"],
+            "y_pred" : data_tmp[y_pred_cols]
             }
 
     return data
+
+def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict, data_rec : dict):
+
+    t = {param: [] for param in parameters_t} # true differences
+    r = {param: [] for param in parameters_r} # recovered differences
+    
+    print(f"keys: {data_rec.keys()}")
+    for key in data_rec.keys():
+        group_1, group_2 = data_rec[key]["group1"], data_rec[key]["group2"]
+
+        # true group differences
+        for param in parameters_t:
+            t[param].append(data_sim[group_1][param] - data_sim[group_2][param]) # figure out which of these is the correct one!
+            #t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
+            print((f"param: {param}"))
+            print(f"group 1: {data_sim[group_1][param]}")
+            print(f"group 2: {data_sim[group_2][param]}")
+
+        print("--------------------------")
+        # recovered group differences
+        
+        for param_r in parameters_r:
+            tmp_data = data_rec[key][param_r] # getting the parameter samples
+
+            if param_r in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta"]:
+                tmp_data = tmp_data.apply(probit)
+                if param_r in ["delta_K", "delta_theta"]:
+                    tmp_data = tmp_data * 5
+
+            # check if nan, then print
+            r[param_r].append(tmp_data.mean())
+            print(f"mean of {param_r}: {tmp_data.mean()}")
+
+
+    return t, r
+
 
 if __name__ == "__main__":
     path = Path(__file__).parent
@@ -77,34 +118,29 @@ if __name__ == "__main__":
     data_sim = load_simulated(path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
 
     # load the recovered data
-    data_rec = load_recovered(path / "fit" / "group_lvl")
+    data_rec = load_recovered(path / "fit" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
+
+    # plot posterior predictive checks
+    keys = list(data_rec.keys())[0]
+
+    posteriors = [data_rec[keys]["delta_a_rew"], data_rec[keys]["delta_a_pun"], data_rec[keys]["delta_K"], data_rec[keys]["delta_theta"], data_rec[keys]["delta_omega_f"], data_rec[keys]["delta_omega_p"]]
+
+    posteriors[0] = posteriors[0].apply(probit)
+    posteriors[1] = posteriors[1].apply(probit)
+
+    plot_posteriors_violin(
+        posteriors = posteriors,
+        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta \\theta$", "$\Delta  \omega_f$", "$\Delta  \omega_p$"],
+        trues = None, 
+        savepath = fig_path / "hierachical_posteriors_violin_ORL.png"
+    )
 
     # Initialize lists for true and recovered parameters
     parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_theta", "mu_omega_f", "mu_omega_p"]
     parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_f", "delta_omega_p"]
 
-    t = {param: [] for param in parameters_t} # true differences
-    r = {param: [] for param in parameters_r} # recovered differences
-    
-    for key in data_rec.keys():
-        group_1, group_2 = data_rec[key]["group1"], data_rec[key]["group2"]
-
-        # true group differences
-        for param in parameters_t:
-            #t[param].append(data_sim[group_1][param] - data_sim[group_2][param]) # figure out which of these is the correct one!
-            t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
-
-        # recovered group differences
-        for param_r in parameters_r:
-            tmp_data = data_rec[key][param_r] # getting the parameter samples
-
-            if param_r in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta":
-                tmp_data = probit(tmp_data)
-                if param_r in ["delta_K", "delta_theta"]:
-                    tmp_data = tmp_data * 5
-
-            r[param_r].append(tmp_data.mean())
-                
+    # get the true and recovered parameters
+    t, r = get_true_recovered(parameters_t, parameters_r, data_sim, data_rec)
 
     # Extract individual lists for true and recovered parameters
     a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t = t.values()
@@ -115,6 +151,6 @@ if __name__ == "__main__":
     plot_recoveries(
         trues = [a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t],
         estimateds = [a_rew_r, a_pun_r, K_r, theta_r, omega_f_r, omega_p_r],
-        parameter_names = ["$\delta A_{rew}$", "$\delta A_{pun}$", "$\delta  K$", "$\delta \theta$", "$\delta  \omega_f$", "$\delta  \omega_p$"],
+        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta \\theta$", "$\Delta  \omega_f$", "$\Delta  \omega_p$"],
         savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
     )
