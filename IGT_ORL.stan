@@ -9,7 +9,7 @@ transformed data {
   initV  = rep_vector(0.0, 4);
 }
 parameters {
-  // Subject-level parameters (for Matt trick)
+  // Subject-level parameters unconstrained
   real a_rew_pr;
   real a_pun_pr;
   real K_pr;
@@ -27,22 +27,24 @@ transformed parameters{
   real                   omega_p;
   real<lower=0>          theta;
 
-  a_rew     = inv_logit(a_rew_pr);
-  a_pun     = inv_logit(a_pun_pr);
-  K         = inv_logit(K_pr)*5;
+  a_rew     = Phi_approx(a_rew_pr);
+  a_pun     = Phi_approx(a_pun_pr);
+  K         = Phi_approx(K_pr)*5;
+  theta     = Phi_approx(theta_pr)*5;
   omega_f   = omega_f_pr;
   omega_p   = omega_p_pr;
-  theta     = inv_logit(theta_pr)*10;
+
 }
 
 model {
   // individual parameters
-  a_rew_pr  ~ normal(0, 5); // sigma was used before
-  a_pun_pr  ~ normal(0, 5);
-  K_pr     ~ normal(0, 5);
-  omega_f_pr ~ normal(0, 5);
-  omega_p_pr ~ normal(0, 5);
-  theta_pr ~ normal(0, 5);
+  a_rew_pr  ~ normal(0, 1);
+  a_pun_pr  ~ normal(0, 1);
+  K_pr     ~ normal(0, 1);
+  theta_pr ~ normal(0, 1);
+  omega_f_pr ~ normal(0, 1);
+  omega_p_pr ~ normal(0, 1);
+
 
   // Define values
     vector[4] ef;
@@ -61,12 +63,13 @@ model {
     // Initialize values
     ef    = initV;
     ev    = initV;
-    pers  = initV; // initial pers values
-    util = initV;
+    pers  = rep_vector(1, 4);
+    pers /= (1 + K);
+    util = softmax(initV*theta);
     K_tr = pow(3, K) - 1;
 
     for (t in 1:T) {
-      choice[t] ~ categorical_logit( util );
+      choice[t] ~ categorical(util);
       // Prediction error
       PEval  = outcome[t] - ev[ choice[t]];
       PEfreq = sign_out[t] - ef[ choice[t]];
@@ -95,7 +98,7 @@ model {
       pers /= (1 + K_tr);        // decay
 
       // Utility of expected value and perseverance
-      util  = (ev + ef * omega_f + pers * omega_p)*theta;
+      util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
     }
 }
 
@@ -133,16 +136,16 @@ generated quantities {
       ef    = initV;
       ev    = initV;
       pers  = initV; // initial pers values
-      util  = initV;
+      util  = softmax(initV*theta);
       K_tr = pow(3, K) - 1;
       log_lik = 0;
 
       for (t in 1:T) {
         // softmax choice
-        log_lik += categorical_logit_lpmf( choice[t] | util );
+        log_lik += categorical_lpmf( choice[t] | util );
 
         // generate posterior prediction for current trial
-        y_pred[t] = categorical_rng(softmax(util));
+        y_pred[t] = categorical_rng(util);
 
         // Prediction error
         PEval  = outcome[t] - ev[ choice[t]];
@@ -172,7 +175,7 @@ generated quantities {
         pers /= (1 + K_tr);        // decay
 
         // Utility of expected value and perseverance
-        util  = (ev + ef * omega_f + pers * omega_p)*theta;
+        util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
       }
     }
   }
