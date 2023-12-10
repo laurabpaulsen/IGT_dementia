@@ -31,8 +31,8 @@ if __name__ in "__main__":
 
 
         mu_K = np.random.uniform(0, 5)
-        mu_omega_f = np.random.uniform(-2, 5)
-        mu_omega_p = np.random.uniform(-2, 5)
+        mu_omega_f = np.random.uniform(-2, 2)
+        mu_omega_p = np.random.uniform(-2, 2)
         mu_theta = np.random.uniform(0, 5)
 
 
@@ -43,7 +43,7 @@ if __name__ in "__main__":
             mu_K = mu_K,
             mu_omega_f = mu_omega_f,
             mu_omega_p = mu_omega_p,
-            mu_theta = mu_theta
+            mu_theta = mu_theta,
             sigma_a_rew = 0.05,
             sigma_a_pun = 0.05,
             sigma_K = 0.05,
