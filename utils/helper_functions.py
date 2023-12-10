@@ -68,14 +68,13 @@ def parse_n_subj_groups():
         help = "The number of groups to simulate, recover or plot depending on the script."
     )
     args = parser.parse_args()
-    return args.n_subj, args.n_trials
+    return args.n_subj, args.n_groups
 
 def logit(x):
     return np.log(x / (1 - x))
 
 def inv_logit(x):
     return 1 / (1 + np.exp(-x))
-
 
 def chance_level(n, alpha = 0.001, p = 0.5):
     """
