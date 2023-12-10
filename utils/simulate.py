@@ -1,6 +1,27 @@
 import numpy as np
 import pandas as pd
 
+
+def softmax(x, theta):
+    """
+    Softmax function.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of values.
+    theta : float
+        Inverse temperature parameter.
+    
+    Returns
+    -------
+    softmax : numpy.ndarray
+        Softmaxed values.
+    """
+    exp_x = np.exp(x*theta)
+    return exp_x / np.sum(exp_x)
+
+
 def create_payoff_structure(
         n_trials : int = 100, 
         freq : float = 0.5,
@@ -106,7 +127,6 @@ def simulate_ORL(
     data : dict
         A dictionary containing the simulated data.
     """
-
     choices = np.zeros(n_trials).astype(int)
     outcomes = np.zeros(n_trials)
     sign_out = np.zeros(n_trials)
@@ -115,16 +135,12 @@ def simulate_ORL(
     ev = np.zeros(4)
     perseverance = np.zeros(4)
     ef = np.zeros(4)
-    util = np.zeros(4)
+    util = softmax(np.ones(4)*0.25, theta)
 
     # looping over trials
     for t in range(n_trials):
-        # probability of choosing each deck (softmax)
-        exp_p = np.exp(util*theta)
-        p = exp_p / np.sum(exp_p)
-
         # choice
-        choices[t] = np.random.choice(4, p=p)
+        choices[t] = np.random.choice(4, p=util)
 
         # outcome
         outcomes[t] = payoff[t, int(choices[t])]
@@ -136,22 +152,22 @@ def simulate_ORL(
         ## prediction error
         PEval = outcomes[t] - ev[choices[t]]
         PEfreq = sign_out[t] - ef[choices[t]]
-        PEfreq_fic = -sign_out[t]/3 - ef[choices[t]]
+        PEfreq_fic = -sign_out[t]/3 - ef
 
         # store chosen deck expected value
         ef_chosen = ef[choices[t]]
         ev_chosen = ev[choices[t]]
 
-        if outcomes[t] >= 0:
+        if outcomes[t] >= 0: # if the outcome is zero or above
             # update ev for all decks
-            ef = ef + a_pun * PEfreq_fic
+            ef += a_pun * PEfreq_fic
 
             # update ev for chosen deck using the stored value
             ef[choices[t]] = ef_chosen + a_rew * PEfreq
             ev[choices[t]] = ev_chosen + a_rew * PEval
         else: # if the outcome is negative
             # update ev for all decks
-            ef = ef + a_rew * PEfreq_fic
+            ef += a_rew * PEfreq_fic
 
             # update ev for chosen deck using the stored value
             ef[choices[t]] = ef_chosen + a_pun * PEfreq
@@ -159,10 +175,10 @@ def simulate_ORL(
         
         # perseverance update  
         perseverance[choices[t]] = 1 # set the chosen deck to 1
-        perseverance = perseverance / (1 + K)    
+        perseverance /= (1 + K)    
 
         # update utility
-        util = ev + omega_f * ef + omega_p * perseverance
+        util = softmax(ev + omega_f * ef + omega_p * perseverance, theta)
 
     data = {
         "choice" : choices.astype(int) + 1,
@@ -236,7 +252,7 @@ def simulate_ORL_group(
             sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
         while sub_omega_p[sub] < 0:
             sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
-        while sub_theta[sub] < 0:
+        while sub_theta[sub] < 0 or sub_theta[sub] > 5:
             sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
         # simulate data
