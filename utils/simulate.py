@@ -1,6 +1,27 @@
 import numpy as np
 import pandas as pd
 
+
+def softmax(x, theta):
+    """
+    Softmax function.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of values.
+    theta : float
+        Inverse temperature parameter.
+    
+    Returns
+    -------
+    softmax : numpy.ndarray
+        Softmaxed values.
+    """
+    exp_x = np.exp(x*theta)
+    return exp_x / np.sum(exp_x)
+
+
 def create_payoff_structure(
         n_trials : int = 100, 
         freq : float = 0.5,
@@ -74,6 +95,7 @@ def simulate_ORL(
         K : float,
         omega_f : float,
         omega_p : float, 
+        theta : float,
         payoff : np.ndarray = create_payoff_structure(), 
         n_trials : int = 100, 
 
@@ -97,63 +119,66 @@ def simulate_ORL(
         Weighting parameter for expected frequencies.
     omega_p : float
         Weighting parameter for perseveration.
+    theta : float
+        Inverse temperature parameter.
     
     Returns
     -------
     data : dict
         A dictionary containing the simulated data.
     """
-
     choices = np.zeros(n_trials).astype(int)
     outcomes = np.zeros(n_trials)
     sign_out = np.zeros(n_trials)
 
     # setting initial values
     ev = np.zeros(4)
-    perseverance = np.zeros(4)
+    perseverance = np.ones(4) / (1 + K)
     ef = np.zeros(4)
+    util = softmax(np.ones(4)*0.25, theta)
 
     # looping over trials
     for t in range(n_trials):
-        valence = ev + omega_f * ef + omega_p * perseverance
-        
-        # probability of choosing each deck (softmax)
-        exp_p = np.exp(valence)
-        p = exp_p / np.sum(exp_p)
-
         # choice
-        choices[t] = np.random.choice(4, p=p)
-        
+        choices[t] = np.random.choice(4, p=util)
+
         # outcome
         outcomes[t] = payoff[t, int(choices[t])]
 
         # get the sign of the reward
         sign_out[t] = np.sign(outcomes[t])
 
-        # update perseveration
-        # set perseveration to 1 if the deck was chosen
-        perseverance[choices[t]] = 1
-        perseverance = perseverance / (1 + K)
+
+        ## prediction error
+        PEval = outcomes[t] - ev[choices[t]]
+        PEfreq = sign_out[t] - ef[choices[t]]
+        PEfreq_fic = -sign_out[t]/3 - ef
+
+        # store chosen deck expected value
+        ef_chosen = ef[choices[t]]
+        ev_chosen = ev[choices[t]]
+
+        if outcomes[t] >= 0: # if the outcome is zero or above
+            # update ev for all decks
+            ef += a_pun * PEfreq_fic
+
+            # update ev for chosen deck using the stored value
+            ef[choices[t]] = ef_chosen + a_rew * PEfreq
+            ev[choices[t]] = ev_chosen + a_rew * PEval
+        else: # if the outcome is negative
+            # update ev for all decks
+            ef += a_rew * PEfreq_fic
+
+            # update ev for chosen deck using the stored value
+            ef[choices[t]] = ef_chosen + a_pun * PEfreq
+            ev[choices[t]] = ev_chosen + a_pun * PEval
         
-        # update expected value for chosen deck
-        if sign_out[t] == 1:
-            ev[choices[t]] = ev[choices[t]] + a_rew * (outcomes[t] - ev[choices[t]])
-        else:
-            ev[choices[t]] = ev[choices[t]] + a_pun * (outcomes[t] - ev[choices[t]])
-        
-        # update expected frequency for chosen deck
-        if sign_out[t] == 1:
-            ef[choices[t]] = ef[choices[t]] + a_rew * (1 - ef[choices[t]])
-        else:
-            ef[choices[t]] = ef[choices[t]] + a_pun * (1 - ef[choices[t]])
-        
-        # update expected frequency for unchosen decks (fictive frequencies)
-        for d in range(4):
-            if d != int(choices[t]):
-                if sign_out[t] == 1:
-                    ef[d] = ef[d] + a_rew * (sign_out[t]/3 * -ef[d])
-                else:
-                    ef[d] = ef[d] + a_pun * (sign_out[t]/3 * -ef[d])
+        # perseverance update  
+        perseverance[choices[t]] = 1 # set the chosen deck to 1
+        perseverance /= (1 + K)    
+
+        # update utility
+        util = softmax(ev + omega_f * ef + omega_p * perseverance, theta)
 
     data = {
         "choice" : choices.astype(int) + 1,
@@ -177,7 +202,9 @@ def simulate_ORL_group(
         mu_omega_f : float = 0.7,
         sigma_omega_f : float = 0.05,
         mu_omega_p : float = 0.7,
-        sigma_omega_p : float = 0.05
+        sigma_omega_p : float = 0.05,
+        mu_theta : float = 1.,
+        sigma_theta : float = 0.05
         ):
     """
     Simulates behavioural data using the payoff structure and the ORL model given a group level mean
@@ -198,7 +225,7 @@ def simulate_ORL_group(
 
     choices, outcomes, sign_out, trial = np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials)), np.zeros((n_subjects, n_trials))
     sub_a_rew, sub_a_pun, sub_K = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
-    sub_omega_f, sub_omega_p = np.zeros(n_subjects), np.zeros(n_subjects)
+    sub_omega_f, sub_omega_p, sub_theta = np.zeros(n_subjects), np.zeros(n_subjects), np.zeros(n_subjects)
 
 
     for sub in range(n_subjects):
@@ -216,14 +243,13 @@ def simulate_ORL_group(
         sub_K[sub] = np.random.normal(mu_K, sigma_K)
         sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
         sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
-        # check that the parameters are < 0 and k between 0 and 5
+        # check that the parameters K and theta are between 0 and 5
         while sub_K[sub] < 0 or sub_K[sub] > 5:
             sub_K[sub] = np.random.normal(mu_K, sigma_K)
-        while sub_omega_f[sub] < 0:
-            sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
-        while sub_omega_p[sub] < 0:
-            sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
+        while sub_theta[sub] < 0 or sub_theta[sub] > 5:
+            sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
         # simulate data
         payoff = create_payoff_structure(n_trials=n_trials)
@@ -235,7 +261,8 @@ def simulate_ORL_group(
             a_pun = sub_a_pun[sub], 
             K = sub_K[sub], 
             omega_f = sub_omega_f[sub], 
-            omega_p = sub_omega_p[sub]
+            omega_p = sub_omega_p[sub],
+            theta = sub_theta[sub]
             )
 
         choices[sub] = sub_data["choice"]

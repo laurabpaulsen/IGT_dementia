@@ -16,8 +16,8 @@ transformed data {
 parameters {
 // Declare all parameters as vectors for vectorizing
   // Hyper(group)-parameters
-  matrix[N_beta, 5] beta_p;
-  vector<lower=0>[5] sigma;
+  matrix[N_beta, 6] beta_p;
+  vector<lower=0>[6] sigma;
 
   // Subject-level raw parameters (for Matt trick)
   vector[N] a_rew_pr;
@@ -25,38 +25,48 @@ parameters {
   vector[N] K_pr;
   vector[N] omega_f_pr;
   vector[N] omega_p_pr;
+  vector[N] theta_pr;
 }
 transformed parameters {
   // Transform subject-level raw parameters
-  vector<lower=0, upper=1>[N] a_rew;
-  vector<lower=0, upper=1>[N] a_pun;
-  vector<lower=0, upper=5>[N] K;
-  vector[N]                   omega_f;
-  vector[N]                   omega_p;
+  vector<lower=0, upper=1>[N]   a_rew;
+  vector<lower=0, upper=1>[N]   a_pun;
+  vector<lower=0, upper=5>[N]   K;
+  vector<lower=0, upper=10>[N]  theta;
+  vector[N]                     omega_f;
+  vector[N]                     omega_p;
 
-  a_rew = inv_logit(X * beta_p[,1] + a_rew_pr);
-  a_pun = inv_logit(X * beta_p[,2] + a_pun_pr);
-  K    = inv_logit(X * beta_p[,3] + K_pr) * 5;
+  a_rew = Phi_approx(X * beta_p[,1] + a_rew_pr);
+  a_pun = Phi_approx(X * beta_p[,2] + a_pun_pr);
+  K     = Phi_approx(X * beta_p[,3] + K_pr) * 5;
+  theta   = Phi_approx(X * beta_p[,4] + K_pr) * 5;
 
-  omega_f = X * beta_p[,4] + omega_f_pr;
-  omega_p = X * beta_p[,5] + omega_p_pr;
+  omega_f = X * beta_p[,5] + omega_f_pr;
+  omega_p = X * beta_p[,6] + omega_p_pr;
+
   
 }
 model {
+  sigma[1:4] ~ normal(0, 0.2);
+  sigma[5:6] ~ cauchy(0, 1.0);
+
+
+  //QUESTION: SHOULD SIGMA WORK ON THE BETAS INSTEAD OF THE SUBJECT LEVEL PARAMS? the way it is setup now sigma is across both groups?
   // Hyperparameters
-  for (idx in 1:5){
-    beta_p[,5]  ~ normal(0, 1);
+  for (idx in 1:6){
+    beta_p[,idx]  ~ normal(0, 1);
   }
-  
-  sigma[1:3] ~ normal(0, 0.2);
-  sigma[4:5] ~ cauchy(0, 1.0);
+
+
 
   // individual parameters
-  a_rew_pr  ~ normal(0, sigma[1]);
-  a_pun_pr  ~ normal(0, sigma[2]);
-  K_pr     ~ normal(0, sigma[3]);
-  omega_f_pr ~ normal(0, sigma[4]);
-  omega_p_pr ~ normal(0, sigma[5]);
+  a_rew_pr   ~ normal(0, sigma[1]);
+  a_pun_pr   ~ normal(0, sigma[2]);
+  K_pr       ~ normal(0, sigma[3]);
+  theta_pr   ~ normal(0, sigma[4]);
+  omega_f_pr ~ normal(0, sigma[5]);
+  omega_p_pr ~ normal(0, sigma[6]);
+
 
   for (i in 1:N) {
     // Define values
@@ -71,18 +81,19 @@ model {
     real PEfreq;
     real efChosen;
     real evChosen;
-    real K_tr;
+    //real K_tr;
 
     // Initialize values
     ef    = initV;
     ev    = initV;
-    pers  = initV; // initial pers values
-    util  = initV;
-    K_tr = pow(3, K[i]) - 1;
+    pers  = rep_vector(1, 4);
+    pers /= (1 + K[i]);
+    util = softmax(initV*theta[i]);
+    //K_tr = pow(3, K[i]) - 1;
 
     for (t in 1:Tsubj[i]) {
       // softmax choice
-      choice[i, t] ~ categorical_logit( util );
+      choice[i, t] ~ categorical( util );
 
       // Prediction error
       PEval  = outcome[i,t] - ev[ choice[i,t]];
@@ -109,10 +120,10 @@ model {
 
       // Perseverance updating
       pers[ choice[i,t] ] = 1;   // perseverance term
-      pers /= (1 + K_tr);        // decay
+      pers /= (1 + K[i]);        // decay
 
-      // Utility of expected value and perseverance
-      util  = ev + ef * omega_f[i] + pers * omega_p[i];
+      // Utility of expected value and perseverance times theta
+      util  = softmax((ev + ef * omega_f[i] + pers * omega_p[i])*theta[i]);
     }
   }
 }
@@ -147,22 +158,27 @@ generated quantities {
       real PEfreq;
       real efChosen;
       real evChosen;
-      real K_tr;
+      //real K_tr;
 
       // Initialize values
       log_lik[i] = 0;
       ef    = initV;
       ev    = initV;
+      pers  = rep_vector(1, 4);
+      pers /= (1 + K[i]);
+      util = softmax(initV*theta[i]);
+      //K_tr = pow(3, K[i]) - 1;
+
       pers  = initV; // initial pers values
       util  = initV;
-      K_tr = pow(3, K[i]) - 1;
+      //K_tr = pow(3, K[i]) - 1;
 
       for (t in 1:Tsubj[i]) {
         // softmax choice
-        log_lik[i] += categorical_logit_lpmf( choice[i, t] | util );
+        log_lik[i] += categorical_lpmf( choice[i, t] | util );
 
         // generate posterior prediction for current trial
-        y_pred[i,t] = categorical_rng(softmax(util));
+        y_pred[i,t] = categorical_rng(util);
 
         // Prediction error
         PEval  = outcome[i,t] - ev[ choice[i,t]];
@@ -188,11 +204,11 @@ generated quantities {
         }
 
         // Perseverance updating
-        pers[ choice[i,t] ] = 1;   // perseverance term
-        pers /= (1 + K_tr);        // decay
+        pers[ choice[i,t] ] = 1;    // perseverance term
+        pers /= (1 + K[i]);            // decay
 
         // Utility of expected value and perseverance
-        util  = ev + ef * omega_f[i] + pers * omega_p[i];
+        util  = softmax((ev + ef * omega_f[i] + pers * omega_p[i]) * theta[i]);
       }
     }
   }
