@@ -8,6 +8,11 @@ sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy
 from utils.helper_functions import logit, inv_logit, chance_level
 
+# load probit function
+from scipy.stats import norm
+
+def probit(p):
+    return norm.ppf(p)
 
 def load_simulated(path : Path) -> dict:
 
@@ -21,6 +26,7 @@ def load_simulated(path : Path) -> dict:
             "mu_a_rew" : data_tmp["mu_a_rew"].unique()[0],
             "mu_a_pun" : data_tmp["mu_a_pun"].unique()[0],
             "mu_K" : data_tmp["mu_K"].unique()[0],
+            "mu_theta" : data_tmp["mu_theta"].unique()[0],
             "mu_omega_f" : data_tmp["mu_omega_f"].unique()[0],
             "mu_omega_p" : data_tmp["mu_omega_p"].unique()[0],
 
@@ -33,10 +39,9 @@ def load_recovered(path : Path) -> dict:
 
     # loop over all csv files in the simulated folder
     for f in path.glob("*.csv"):
-        #data_tmp = pd.read_csv(f, usecols=[ "delta_a_pun", "delta_a_rew", "delta_K", "delta_omega_f", "delta_omega_p"] ) 
         data_tmp = pd.read_csv(
             f,
-            usecols = ["beta_p.2.1" , "beta_p.2.2" , "beta_p.2.3" ,  "beta_p.2.4"  , "beta_p.2.5"]
+            usecols = ["beta_p.2.1" , "beta_p.2.2" , "beta_p.2.3" ,  "beta_p.2.4"  , "beta_p.2.5", "beta_p.2.6"]
         )
         
         group1 = int(re.split("_", f.stem)[-2])
@@ -47,11 +52,12 @@ def load_recovered(path : Path) -> dict:
             #"data" : data_tmp, 
             "group1" : group1,
             "group2" : group2,
-            "delta_a_rew" : inv_logit(data_tmp["beta_p.2.1"]).mean(),
-            "delta_a_pun" : inv_logit(data_tmp["beta_p.2.2" ]).mean(),
-            "delta_K" : (inv_logit(data_tmp["beta_p.2.3"]) * 5).mean(),
-            "delta_omega_f" : data_tmp[ "beta_p.2.4"].mean(),
-            "delta_omega_p" : data_tmp[ "beta_p.2.5"].mean(),
+            "delta_a_rew" : data_tmp["beta_p.2.1"].mean(),
+            "delta_a_pun" : data_tmp["beta_p.2.2" ].mean(),
+            "delta_K" : data_tmp["beta_p.2.3"].mean(),
+            "delta_theta" : data_tmp[ "beta_p.2.4"].mean(),
+            "delta_omega_f" : data_tmp[ "beta_p.2.5"].mean(),
+            "delta_omega_p" : data_tmp[ "beta_p.2.6"].mean(),
             }
 
     return data
@@ -72,8 +78,8 @@ if __name__ == "__main__":
     data_rec = load_recovered(path / "fit" / "group_lvl")
 
     # Initialize lists for true and recovered parameters
-    parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_omega_f", "mu_omega_p"]
-    parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_f", "delta_omega_p"]
+    parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_theta", "mu_omega_f", "mu_omega_p"]
+    parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_f", "delta_omega_p"]
 
     t = {param: [] for param in parameters_t} # true differences
     r = {param: [] for param in parameters_r} # recovered differences
@@ -90,24 +96,23 @@ if __name__ == "__main__":
         for param_r in parameters_r:
             tmp_data = data_rec[key][param_r] # getting the parameter samples
 
-            if param_r in ["delta_a_rew", "delta_a_pun", "delta_K"]:
-                tmp_data = inv_logit(tmp_data)
-                if param_r == "delta_K":
+            if param_r in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta":
+                tmp_data = probit(tmp_data)
+                if param_r in ["delta_K", "delta_theta"]:
                     tmp_data = tmp_data * 5
 
             r[param_r].append(tmp_data.mean())
                 
 
     # Extract individual lists for true and recovered parameters
-    a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t = t.values()
-    a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r = r.values()
+    a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t = t.values()
+    a_rew_r, a_pun_r, K_r, theta_r, omega_f_r, omega_p_r = r.values()
 
 
     # plot the recovery of the parameters
     plot_recoveries(
-        trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t],
-        estimateds = [a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r],
-        #parameter_names=["a_pun", "a_rew", "K", "omega_f", "omega_p"],
-        parameter_names = ["$\delta A_{rew}$", "$\delta A_{pun}$", "$\delta  K$", "$\delta  \omega_f$", "$\delta  \omega_p$"],
+        trues = [a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t],
+        estimateds = [a_rew_r, a_pun_r, K_r, theta_r, omega_f_r, omega_p_r],
+        parameter_names = ["$\delta A_{rew}$", "$\delta A_{pun}$", "$\delta  K$", "$\delta \theta$", "$\delta  \omega_f$", "$\delta  \omega_p$"],
         savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
     )
