@@ -15,13 +15,15 @@ from utils.helper_functions import parse_n_subj_groups
 if __name__ in "__main__":
     path = Path(__file__).parent
 
+    n_subjects, n_groups = parse_n_subj_groups()
+
     # output path for simulated data
-    output_path = path / "simulated" / "group_lvl"
+    output_path = path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subjects}"
 
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-    n_subjects, n_groups = parse_n_subj_groups()
+
 
     for group in range(n_groups):
         mu_a_rew = np.random.uniform(0, 1)
@@ -59,7 +61,7 @@ if __name__ in "__main__":
         df["mu_theta"] = mu_theta
 
 
-        df.to_csv(output_path / f"ORL_simulated_group_{group+1}_{n_subjects}_sub.csv", index=False)
+        df.to_csv(output_path / f"ORL_simulated_group_{group+1}.csv", index=False)
 
 
     

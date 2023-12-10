@@ -6,7 +6,7 @@ import re
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy
-from utils.helper_functions import logit, inv_logit, chance_level
+from utils.helper_functions import logit, inv_logit, chance_level, parse_n_subj_groups
 
 # load probit function
 from scipy.stats import norm
@@ -65,6 +65,8 @@ def load_recovered(path : Path) -> dict:
 if __name__ == "__main__":
     path = Path(__file__).parent
 
+    n_subj, n_groups = parse_n_subj_groups()
+
     fig_path = path / "fig"
 
     # create the figure path if it does not exist
@@ -72,7 +74,7 @@ if __name__ == "__main__":
         fig_path.mkdir()
 
     # load the simulated data
-    data_sim = load_simulated(path / "simulated" / "group_lvl")
+    data_sim = load_simulated(path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
 
     # load the recovered data
     data_rec = load_recovered(path / "fit" / "group_lvl")

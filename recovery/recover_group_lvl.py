@@ -14,8 +14,10 @@ from utils.helper_functions import parse_n_subj_groups
 if __name__ == "__main__":
     path = Path(__file__).parent
 
-    inpath = path / "simulated" / "group_lvl"
-    outpath = path / "fit" / "group_lvl" 
+    n_subj, n_groups = parse_n_subj_groups()
+
+    inpath = path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}"
+    outpath = path / "fit" / "group_lvl"  / f"{n_groups}" / f"{n_subj}"
 
     if not outpath.exists():
         outpath.mkdir(parents = True)
@@ -24,7 +26,6 @@ if __name__ == "__main__":
         model_spec = f.read()
 
     # make a list of tuples with all combinations of groups (don't want to compare group 1 with group 1 or group 1 with group 2 and group 2 with group 1)
-    n_subj, n_groups = parse_n_subj_groups()
     compare_groups = list(combinations(range(1, n_groups + 1), 2))
 
     # shuffle the list (so that we don't always start with the same comparison) - makes it more fun to plot results as we go along
@@ -40,10 +41,10 @@ if __name__ == "__main__":
             continue
 
         
-        filename1 = f"ORL_simulated_group_{group1}_20_sub.csv"
+        filename1 = f"ORL_simulated_group_{group1}.csv"
         data1 = pd.read_csv(inpath / filename1)
         
-        filename2 = f"ORL_simulated_group_{group2}_20_sub.csv"
+        filename2 = f"ORL_simulated_group_{group2}.csv"
         data2 = pd.read_csv(inpath / filename2)
 
 
