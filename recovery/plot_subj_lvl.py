@@ -8,9 +8,8 @@ import numpy as np
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_recoveries, plot_descriptive_adequacy
-from utils.helper_functions import chance_level, parse_n_subj
-
+from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
+from utils.helper_functions import chance_level, parse_n_subj, maximum_posterior_density
 
 
 if __name__ == "__main__":
@@ -44,13 +43,23 @@ if __name__ == "__main__":
         tmp_sim = sim_data[sim_data["sub"] == sub]
         rec_data = pd.read_csv(rec_path / f"param_rec_subj_{sub}.csv")
 
+        print(rec_data.shape)
+
+        # plot the posteriors
+        plot_posteriors_violin(
+            posteriors = [rec_data[f"{param}"] for param in parameters],
+            trues = [tmp_sim[param].unique()[0] for param in parameters],
+            parameter_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_p$", "$\omega_f$", "$K$", "$\\theta$"],
+            savepath = fig_path / f"subj_{sub}_posteriors_ORL.png"
+        )
+
         for param in parameters:
             suffix_t, suffix_r = "t", "r"
             param_dict[f"{param}_{suffix_t}"].append(tmp_sim[param].unique()[0])
                 
             recovered_param = rec_data[f"{param}"]
                 
-            param_dict[f"{param}_{suffix_r}"].append(np.mean(recovered_param))
+            param_dict[f"{param}_{suffix_r}"].append(maximum_posterior_density(recovered_param))
 
         true_choices.append(tmp_sim["choice"].to_list())
 
