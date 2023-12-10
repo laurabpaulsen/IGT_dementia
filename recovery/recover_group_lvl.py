@@ -48,8 +48,8 @@ if __name__ == "__main__":
         data2 = pd.read_csv(inpath / filename2)
 
 
-        data1["group"] = -0.5
-        data2["group"] = 0.5
+        data1["group"] = 1
+        data2["group"] = 2
 
         data2["sub"] += data1["sub"].max() # make sure that the subject numbers are unique across groups
 
