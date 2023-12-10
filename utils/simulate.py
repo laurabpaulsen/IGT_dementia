@@ -133,7 +133,7 @@ def simulate_ORL(
 
     # setting initial values
     ev = np.zeros(4)
-    perseverance = np.zeros(4)
+    perseverance = np.ones(4) / (1 + K)
     ef = np.zeros(4)
     util = softmax(np.ones(4)*0.25, theta)
 
@@ -245,13 +245,9 @@ def simulate_ORL_group(
         sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
         sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
-        # check that the parameters are < 0 and k between 0 and 5
+        # check that the parameters K and theta are between 0 and 5
         while sub_K[sub] < 0 or sub_K[sub] > 5:
             sub_K[sub] = np.random.normal(mu_K, sigma_K)
-        while sub_omega_f[sub] < 0:
-            sub_omega_f[sub] = np.random.normal(mu_omega_f, sigma_omega_f)
-        while sub_omega_p[sub] < 0:
-            sub_omega_p[sub] = np.random.normal(mu_omega_p, sigma_omega_p)
         while sub_theta[sub] < 0 or sub_theta[sub] > 5:
             sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
 
