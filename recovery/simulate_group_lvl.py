@@ -29,9 +29,9 @@ if __name__ in "__main__":
 
 
         mu_K = np.random.uniform(0, 5)
-        mu_omega_f = np.random.uniform(0, 5)
-        mu_omega_p = np.random.uniform(0, 5)
-        mu_theta = np.random.uniform(0, 10)
+        mu_omega_f = np.random.uniform(-2, 5)
+        mu_omega_p = np.random.uniform(-2, 5)
+        mu_theta = np.random.uniform(0, 5)
 
 
         data = simulate_ORL_group(
