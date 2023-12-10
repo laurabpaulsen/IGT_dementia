@@ -22,7 +22,6 @@ def fit_group_level(data, model_spec, savepath = None, summary = False):
 
     group = np.array(data[data["trial"] == 1]["group"])
     
-    design_matrix = np.vstack((intercept, group)).T
 
     # reshape choice and outcome to N_subj x T
     choice = np.array(data["choice"]).reshape(data["sub"].nunique(), -1)
@@ -35,9 +34,7 @@ def fit_group_level(data, model_spec, savepath = None, summary = False):
         "N": data["sub"].nunique(),
         "Tsubj": data.groupby("sub").size().values,
         "T": 100,
-        "N_beta": 2,
-        "X" : design_matrix
-
+        "group" : group
     }
 
     # fit the model
