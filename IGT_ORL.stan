@@ -42,8 +42,8 @@ model {
   a_pun_pr  ~ normal(0, 1);
   K_pr     ~ normal(0, 1);
   theta_pr ~ normal(0, 1);
-  omega_f_pr ~ normal(0, 1);
-  omega_p_pr ~ normal(0, 1);
+  omega_f_pr ~ normal(0, 5);
+  omega_p_pr ~ normal(0, 5);
 
 
   // Define values
@@ -58,7 +58,7 @@ model {
     real PEfreq;
     real efChosen;
     real evChosen;
-    real K_tr;
+    //real K_tr;
 
     // Initialize values
     ef    = initV;
@@ -66,7 +66,7 @@ model {
     pers  = rep_vector(1, 4);
     pers /= (1 + K);
     util = softmax(initV*theta);
-    K_tr = pow(3, K) - 1;
+    //K_tr = pow(3, K) - 1;
 
     for (t in 1:T) {
       choice[t] ~ categorical(util);
@@ -95,7 +95,7 @@ model {
 
       // Perseverance updating
       pers[ choice[t] ] = 1;   // perseverance term
-      pers /= (1 + K_tr);        // decay
+      pers /= (1 + K);        // decay
 
       // Utility of expected value and perseverance
       util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
@@ -130,14 +130,14 @@ generated quantities {
       real PEfreq;
       real efChosen;
       real evChosen;
-      real K_tr;
+      //real K_tr;
 
       // Initialize values
       ef    = initV;
       ev    = initV;
       pers  = initV; // initial pers values
       util  = softmax(initV*theta);
-      K_tr = pow(3, K) - 1;
+      //K_tr = pow(3, K) - 1;
       log_lik = 0;
 
       for (t in 1:T) {
@@ -172,7 +172,7 @@ generated quantities {
 
         // Perseverance updating
         pers[ choice[t] ] = 1;   // perseverance term
-        pers /= (1 + K_tr);        // decay
+        pers /= (1 + K);        // decay
 
         // Utility of expected value and perseverance
         util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);

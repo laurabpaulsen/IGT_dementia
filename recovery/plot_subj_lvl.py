@@ -43,15 +43,13 @@ if __name__ == "__main__":
         tmp_sim = sim_data[sim_data["sub"] == sub]
         rec_data = pd.read_csv(rec_path / f"param_rec_subj_{sub}.csv")
 
-        print(rec_data.shape)
-
         # plot the posteriors
-        plot_posteriors_violin(
-            posteriors = [rec_data[f"{param}"] for param in parameters],
-            trues = [tmp_sim[param].unique()[0] for param in parameters],
-            parameter_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_p$", "$\omega_f$", "$K$", "$\\theta$"],
-            savepath = fig_path / f"subj_{sub}_posteriors_ORL.png"
-        )
+        #plot_posteriors_violin(
+        #    posteriors = [rec_data[f"{param}"] for param in parameters],
+        #    trues = [tmp_sim[param].unique()[0] for param in parameters],
+        #    parameter_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_p$", "$\omega_f$", "$K$", "$\\theta$"],
+        #    savepath = fig_path / f"subj_{sub}_posteriors_ORL.png"
+        #-)
 
         for param in parameters:
             suffix_t, suffix_r = "t", "r"

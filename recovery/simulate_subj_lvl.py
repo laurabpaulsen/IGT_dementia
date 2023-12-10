@@ -32,8 +32,8 @@ if __name__ in "__main__":
         a_pun = np.random.uniform(0, 1)
 
         K = np.random.uniform(0, 5)
-        omega_f = np.random.uniform(-2, 5)
-        omega_p = np.random.uniform(-2, 5)
+        omega_f = np.random.uniform(-2, 2)
+        omega_p = np.random.uniform(-2, 2)
         theta = np.random.uniform(0, 5)
 
         data = simulate_ORL(
