@@ -6,7 +6,7 @@ data {
   int choice[N, T]; // choices made
   real outcome[N, T]; // oucomes
   real sign_out[N, T]; // sign of outcome
-  int group[N]; // which group the subject belongs too (1 or 2)
+  int group[N]; // which group the subject belongs to (1 or 2)
 }
 
 transformed data {
@@ -27,7 +27,7 @@ parameters {
   vector<lower=0, upper=1>[N]   a_rew;
   vector<lower=0, upper=1>[N]   a_pun;
   vector<lower=0>[N]            K;
-  vector<lower=0>[N]             theta;
+  vector<lower=0>[N]            theta;
   vector[N]                     omega_f;
   vector[N]                     omega_p;
 }
