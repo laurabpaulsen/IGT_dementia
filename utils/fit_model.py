@@ -79,8 +79,8 @@ def fit_subject_level(data, model_spec, savepath = None):
     # fit the model
     model = stan.build(model_spec, data = data_dict)
     fit = model.sample(
-        num_chains = 3, 
-        num_samples = 3000,
+        num_chains = 4, 
+        num_samples = 1000,
         num_warmup = 1000)
 
     # get the estimated parameters
