@@ -9,7 +9,7 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
-from utils.helper_functions import chance_level, parse_n_subj, maximum_posterior_density
+from utils.helper_functions import chance_level, parse_n_subj
 
 
 if __name__ == "__main__":
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                     
                 recovered_param = rec_data[f"{param}"]
                     
-                param_dict[f"{param}_{suffix_r}"].append(maximum_posterior_density(recovered_param))
+                param_dict[f"{param}_{suffix_r}"].append(np.mean(recovered_param))
 
             true_choices.append(tmp_sim["choice"].to_list())
 
