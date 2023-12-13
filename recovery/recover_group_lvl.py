@@ -34,11 +34,16 @@ if __name__ == "__main__":
     for i, (group1, group2) in enumerate(compare_groups):
         # group outpath
         outpath_group = outpath / f"param_rec_{group1}_{group2}.csv"
+    
 
         # check if there is already a file for this comparison, if so, skip!
         if outpath_group.exists():
             print(f"Comparison {i+1} of {len(compare_groups)} already exists, skipping...")
             continue
+
+        print(f"Starting comparison {group1} vs {group2} ({i+1})")
+        # save an empty file so that other processes know that this comparison is being worked on
+        outpath_group.touch()
 
         
         filename1 = f"ORL_simulated_group_{group1}.csv"
