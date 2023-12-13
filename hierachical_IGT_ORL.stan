@@ -6,66 +6,60 @@ data {
   int choice[N, T]; // choices made
   real outcome[N, T]; // oucomes
   real sign_out[N, T]; // sign of outcome
-  int N_beta; // number of model coefficients
-  matrix[N, N_beta] X; // design matrix
+  int group[N]; // which group the subject belongs to (1 or 2)
 }
+
 transformed data {
   vector[4] initV;
   initV  = rep_vector(0.0, 4);
 }
+
 parameters {
 // Declare all parameters as vectors for vectorizing
   // Hyper(group)-parameters
-  matrix[N_beta, 6] beta_p;
-  vector<lower=0>[6] sigma;
+  vector[6] mu; // overall mean (in both groups)
+  vector[6] delta; // the difference btween the groups
+  vector<lower=0>[6] sigma_group1;
+  vector<lower=0>[6] sigma_group2;
 
-  // Subject-level raw parameters (for Matt trick)
-  vector[N] a_rew_pr;
-  vector[N] a_pun_pr;
-  vector[N] K_pr;
-  vector[N] omega_f_pr;
-  vector[N] omega_p_pr;
-  vector[N] theta_pr;
-}
-transformed parameters {
-  // Transform subject-level raw parameters
+
+  // Subject-level parameters 
   vector<lower=0, upper=1>[N]   a_rew;
   vector<lower=0, upper=1>[N]   a_pun;
-  vector<lower=0, upper=5>[N]   K;
-  vector<lower=0, upper=10>[N]  theta;
+  vector<lower=0>[N]            K;
+  vector<lower=0>[N]            theta;
   vector[N]                     omega_f;
   vector[N]                     omega_p;
-
-  a_rew = Phi_approx(X * beta_p[,1] + a_rew_pr);
-  a_pun = Phi_approx(X * beta_p[,2] + a_pun_pr);
-  K     = Phi_approx(X * beta_p[,3] + K_pr) * 5;
-  theta   = Phi_approx(X * beta_p[,4] + K_pr) * 5;
-
-  omega_f = X * beta_p[,5] + omega_f_pr;
-  omega_p = X * beta_p[,6] + omega_p_pr;
-
-  
 }
+
 model {
-  sigma[1:4] ~ normal(0, 0.2);
-  sigma[5:6] ~ cauchy(0, 1.0);
-
-
-  //QUESTION: SHOULD SIGMA WORK ON THE BETAS INSTEAD OF THE SUBJECT LEVEL PARAMS? the way it is setup now sigma is across both groups?
   // Hyperparameters
-  for (idx in 1:6){
-    beta_p[,idx]  ~ normal(0, 1);
+  mu ~ normal(0, 1);
+  delta ~ normal(0, 1);
+
+  // group level parameters
+  sigma_group1 ~ gamma(.1,.1);
+  sigma_group2 ~ gamma(.1,.1);
+
+  // modelling each parameter for each subject according to the overall mean and the difference between the groups (with a group level standard deviation)
+  for(n in 1:N){
+    if (group[n] == 1){ 
+      a_rew[n]    ~ normal((mu[1] - (delta[1]/2)), sigma_group1[1])T[0,1];
+      a_pun[n]    ~ normal((mu[2] - (delta[2]/2)), sigma_group1[2])T[0,1];
+      K[n]        ~ normal((mu[3] - (delta[3]/2)), sigma_group1[3])T[0, ];
+      theta[n]    ~ normal((mu[4] - (delta[4]/2)), sigma_group1[4])T[0, ];
+      omega_f[n]  ~ normal((mu[5] - (delta[5]/2)), sigma_group1[5]);
+      omega_p[n]  ~ normal((mu[6] - (delta[6]/2)), sigma_group1[6]);
+    }
+    else if (group[n] == 2){
+      a_rew[n]    ~ normal((mu[1] + (delta[1]/2)), sigma_group2[1])T[0,1];
+      a_pun[n]    ~ normal((mu[2] + (delta[2]/2)), sigma_group2[2])T[0,1];
+      K[n]        ~ normal((mu[3] + (delta[3]/2)), sigma_group2[3])T[0, ];
+      theta[n]    ~ normal((mu[4] + (delta[4]/2)), sigma_group2[4])T[0, ];
+      omega_f[n]  ~ normal((mu[5] + (delta[5]/2)), sigma_group2[5]);
+      omega_p[n]  ~ normal((mu[6] + (delta[6]/2)), sigma_group2[6]);
+    }
   }
-
-
-
-  // individual parameters
-  a_rew_pr   ~ normal(0, sigma[1]);
-  a_pun_pr   ~ normal(0, sigma[2]);
-  K_pr       ~ normal(0, sigma[3]);
-  theta_pr   ~ normal(0, sigma[4]);
-  omega_f_pr ~ normal(0, sigma[5]);
-  omega_p_pr ~ normal(0, sigma[6]);
 
 
   for (i in 1:N) {
@@ -74,7 +68,7 @@ model {
     vector[4] ev;
     vector[4] PEfreq_fic;
     vector[4] PEval_fic;
-    vector[4] pers;   // perseverance
+    vector[4] pers;
     vector[4] util;
 
     real PEval;
@@ -89,7 +83,6 @@ model {
     pers  = rep_vector(1, 4);
     pers /= (1 + K[i]);
     util = softmax(initV*theta[i]);
-    //K_tr = pow(3, K[i]) - 1;
 
     for (t in 1:Tsubj[i]) {
       // softmax choice
@@ -128,7 +121,6 @@ model {
   }
 }
 
-
 generated quantities {
 
   // For log likelihood calculation
@@ -158,7 +150,6 @@ generated quantities {
       real PEfreq;
       real efChosen;
       real evChosen;
-      //real K_tr;
 
       // Initialize values
       log_lik[i] = 0;
@@ -167,11 +158,9 @@ generated quantities {
       pers  = rep_vector(1, 4);
       pers /= (1 + K[i]);
       util = softmax(initV*theta[i]);
-      //K_tr = pow(3, K[i]) - 1;
 
       pers  = initV; // initial pers values
       util  = initV;
-      //K_tr = pow(3, K[i]) - 1;
 
       for (t in 1:Tsubj[i]) {
         // softmax choice

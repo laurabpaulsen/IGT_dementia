@@ -15,7 +15,6 @@ parameters {
   real<lower=0> K;
   real                   omega_f;
   real                   omega_p;
-  real<lower=0>          theta;
 
 }
 
@@ -25,7 +24,6 @@ model {
   a_rew  ~ normal(0, 1)T[0,1];
   a_pun  ~ normal(0, 1)T[0,1];
   K     ~ normal(0, 1)T[0,];
-  theta ~ normal(0, 1)T[0,];
   omega_f ~ normal(0, 1);
   omega_p ~ normal(0, 1);
 
@@ -49,7 +47,7 @@ model {
     ev    = initV;
     pers  = rep_vector(1, 4);
     pers /= (1 + K);
-    util = softmax(initV*theta);
+    util = softmax(initV);
     //K_tr = pow(3, K) - 1;
 
     for (t in 1:T) {
@@ -82,7 +80,7 @@ model {
       pers /= (1 + K);        // decay
 
       // Utility of expected value and perseverance
-      util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
+      util  = softmax((ev + ef * omega_f + pers * omega_p));
     }
 }
 
@@ -120,7 +118,7 @@ generated quantities {
       ef    = initV;
       ev    = initV;
       pers  = initV; // initial pers values
-      util  = softmax(initV*theta);
+      util  = softmax(initV);
       //K_tr = pow(3, K) - 1;
       log_lik = 0;
 
@@ -159,7 +157,7 @@ generated quantities {
         pers /= (1 + K);        // decay
 
         // Utility of expected value and perseverance
-        util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
+        util  = softmax((ev + ef * omega_f + pers * omega_p));
       }
     }
   }

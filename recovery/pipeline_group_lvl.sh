@@ -1,7 +1,7 @@
 
 # set the number of groups to simulate
 N_SUBJ=20
-N_GROUPS=3
+N_GROUPS=20
 
 # get location of this bash script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"

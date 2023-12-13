@@ -10,11 +10,8 @@ from scipy.stats import norm
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
-from utils.helper_functions import logit, inv_logit, chance_level, parse_n_subj_groups
+from utils.helper_functions import chance_level, parse_n_subj_groups
 
-def probit(x):
-    #'Cumulative distribution function for the standard normal distribution'
-    return (1.0 + erf(x / sqrt(2.0))) / 2.0
 
 def load_simulated(path : Path) -> dict:
 
@@ -43,7 +40,7 @@ def load_recovered(path : Path) -> dict:
     for f in path.glob("*.csv"):
         data_tmp = pd.read_csv(
             f,
-            usecols = ["beta_p.2.1" , "beta_p.2.2" , "beta_p.2.3" ,  "beta_p.2.4"  , "beta_p.2.5", "beta_p.2.6"]
+            usecols = lambda x: x.startswith("y_pred") or x.startswith("delta") 
         )
         
         group1 = int(re.split("_", f.stem)[-2])
@@ -56,12 +53,12 @@ def load_recovered(path : Path) -> dict:
             #"data" : data_tmp, 
             "group1" : group1,
             "group2" : group2,
-            "delta_a_rew" : data_tmp["beta_p.2.1"],
-            "delta_a_pun" : data_tmp["beta_p.2.2" ],
-            "delta_K" : data_tmp["beta_p.2.3"],
-            "delta_theta" : data_tmp[ "beta_p.2.4"],
-            "delta_omega_f" : data_tmp[ "beta_p.2.5"],
-            "delta_omega_p" : data_tmp[ "beta_p.2.6"],
+            "delta_a_rew" : data_tmp["delta.1"],
+            "delta_a_pun" : data_tmp["delta.2"],
+            "delta_K" : data_tmp["delta.3"],
+            "delta_theta" : data_tmp["delta.4"],
+            "delta_omega_f" : data_tmp["delta.5"],
+            "delta_omega_p" : data_tmp["delta.6"],
             "y_pred" : data_tmp[y_pred_cols]
             }
 
@@ -72,32 +69,19 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
     t = {param: [] for param in parameters_t} # true differences
     r = {param: [] for param in parameters_r} # recovered differences
     
-    print(f"keys: {data_rec.keys()}")
     for key in data_rec.keys():
         group_1, group_2 = data_rec[key]["group1"], data_rec[key]["group2"]
 
         # true group differences
         for param in parameters_t:
-            t[param].append(data_sim[group_1][param] - data_sim[group_2][param]) # figure out which of these is the correct one!
-            #t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
-            print((f"param: {param}"))
-            print(f"group 1: {data_sim[group_1][param]}")
-            print(f"group 2: {data_sim[group_2][param]}")
+            #t[param].append(data_sim[group_1][param] - data_sim[group_2][param]) # figure out which of these is the correct one!
+            t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
 
-        print("--------------------------")
-        # recovered group differences
-        
         for param_r in parameters_r:
             tmp_data = data_rec[key][param_r] # getting the parameter samples
 
-            if param_r in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta"]:
-                tmp_data = tmp_data.apply(probit)
-                if param_r in ["delta_K", "delta_theta"]:
-                    tmp_data = tmp_data * 5
-
             # check if nan, then print
             r[param_r].append(tmp_data.mean())
-            print(f"mean of {param_r}: {tmp_data.mean()}")
 
 
     return t, r
@@ -125,16 +109,6 @@ if __name__ == "__main__":
 
     posteriors = [data_rec[keys]["delta_a_rew"], data_rec[keys]["delta_a_pun"], data_rec[keys]["delta_K"], data_rec[keys]["delta_theta"], data_rec[keys]["delta_omega_f"], data_rec[keys]["delta_omega_p"]]
 
-    posteriors[0] = posteriors[0].apply(probit)
-    posteriors[1] = posteriors[1].apply(probit)
-
-    plot_posteriors_violin(
-        posteriors = posteriors,
-        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta \\theta$", "$\Delta  \omega_f$", "$\Delta  \omega_p$"],
-        trues = None, 
-        savepath = fig_path / "hierachical_posteriors_violin_ORL.png"
-    )
-
     # Initialize lists for true and recovered parameters
     parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_theta", "mu_omega_f", "mu_omega_p"]
     parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_f", "delta_omega_p"]
@@ -149,8 +123,8 @@ if __name__ == "__main__":
 
     # plot the recovery of the parameters
     plot_recoveries(
-        trues = [a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t],
-        estimateds = [a_rew_r, a_pun_r, K_r, theta_r, omega_f_r, omega_p_r],
-        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta \\theta$", "$\Delta  \omega_f$", "$\Delta  \omega_p$"],
+        trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t, theta_t,],
+        estimateds = [a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r, theta_r],
+        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta  \omega_F$", "$\Delta  \omega_P$", "$\Delta \\theta$", ],
         savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
     )

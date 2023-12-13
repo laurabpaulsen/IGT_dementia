@@ -22,7 +22,7 @@ def softmax(x, theta):
     return exp_x / np.sum(exp_x)
 
 
-def create_payoff_structure(
+def create_payoff_structure_old(
         n_trials : int = 100, 
         freq : float = 0.5,
         infreq : float = 0.1,
@@ -89,14 +89,15 @@ def create_payoff_structure(
     return payoff
 
 
+
 def simulate_ORL(
+        payoff : np.ndarray,
         a_rew : float, 
         a_pun : float, 
         K : float,
         omega_f : float,
         omega_p : float, 
         theta : float,
-        payoff : np.ndarray = create_payoff_structure(), 
         n_trials : int = 100, 
 
         ):
@@ -137,13 +138,21 @@ def simulate_ORL(
     ef = np.zeros(4)
     util = softmax(np.ones(4)*0.25, theta)
 
+    cards_chosen = np.zeros(4).astype(int)
+
+    available_decks = np.where(cards_chosen < 60)[0]
+
     # looping over trials
     for t in range(n_trials):
+
         # choice
-        choices[t] = np.random.choice(4, p=util)
+        choices[t] = np.random.choice(available_decks, p=util)
+
+        # update cards chosen
+        cards_chosen[choices[t]] += 1
 
         # outcome
-        outcomes[t] = payoff[t, int(choices[t])]
+        outcomes[t] = payoff[cards_chosen[choices[t]] - 1, choices[t]]
 
         # get the sign of the reward
         sign_out[t] = np.sign(outcomes[t])
@@ -178,7 +187,14 @@ def simulate_ORL(
         perseverance /= (1 + K)    
 
         # update utility
-        util = softmax(ev + omega_f * ef + omega_p * perseverance, theta)
+        util = ev + omega_f * ef + omega_p * perseverance
+
+        available_decks = np.where(cards_chosen < 60)[0] # get the available decks
+
+        if len(available_decks) != 4: # if there are less than 4 available deck
+            util = util[available_decks] # update the utility
+
+        util = softmax(util, theta) # softmax the utility
 
     data = {
         "choice" : choices.astype(int) + 1,
