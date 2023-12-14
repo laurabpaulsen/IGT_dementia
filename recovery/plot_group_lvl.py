@@ -38,10 +38,16 @@ def load_recovered(path : Path) -> dict:
 
     # loop over all csv files in the simulated folder
     for f in path.glob("*.csv"):
-        data_tmp = pd.read_csv(
-            f,
-            usecols = lambda x: x.startswith("y_pred") or x.startswith("delta") 
-        )
+
+        try:
+            data_tmp = pd.read_csv(
+                f,
+                usecols = lambda x: x.startswith("y_pred") or x.startswith("delta") 
+            )
+        except pd.errors.EmptyDataError:
+            print(f"File {f} is empty")
+            continue
+
         
         group1 = int(re.split("_", f.stem)[-2])
         group2 = int(re.split("_", f.stem)[-1])
