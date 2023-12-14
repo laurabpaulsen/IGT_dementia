@@ -67,7 +67,7 @@ if __name__ == "__main__":
         trues = [param_dict[f"{param}_t"] for param in parameters]
         estimateds = [param_dict[f"{param}_r"] for param in parameters]
 
-        param_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_p$", "$\omega_f$", "$K$"]
+        param_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_P$", "$\omega_F$", "$K$"]
 
         if theta_bool:
             param_names.append("$\\theta$")
@@ -87,15 +87,3 @@ if __name__ == "__main__":
             chance_level = chance_level(100, p = 1/4, alpha = 0.05)*100,
             savepath = fig_path / "subj_lvl_descriptive_ORL.png" if theta_bool else fig_path / "subj_lvl_descriptive_ORL_no_theta.png"
         )
-
-
-"""
-
-            # plot the posteriors
-            #plot_posteriors_violin(
-            #    posteriors = [rec_data[f"{param}"] for param in parameters],
-            #    trues = [tmp_sim[param].unique()[0] for param in parameters],
-            #    parameter_names = ["$A_{rew}$", "$A_{pun}$", "$\omega_p$", "$\omega_f$", "$K$", "$\\theta$"],
-            #    savepath = fig_path / f"subj_{sub}_posteriors_ORL.png"
-            #-)
-"""
