@@ -80,7 +80,6 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
 
         # true group differences
         for param in parameters_t:
-            #t[param].append(data_sim[group_1][param] - data_sim[group_2][param]) # figure out which of these is the correct one!
             t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
 
         for param_r in parameters_r:
@@ -104,18 +103,10 @@ if __name__ == "__main__":
     if not fig_path.exists():
         fig_path.mkdir()
 
-    # load the simulated data
+    # load the simulated and recovered data
     data_sim = load_simulated(path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
-
-    # load the recovered data
     data_rec = load_recovered(path / "fit" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
 
-    # plot posterior predictive checks
-    keys = list(data_rec.keys())[0]
-
-    posteriors = [data_rec[keys]["delta_a_rew"], data_rec[keys]["delta_a_pun"], data_rec[keys]["delta_K"], data_rec[keys]["delta_theta"], data_rec[keys]["delta_omega_f"], data_rec[keys]["delta_omega_p"]]
-
-    # Initialize lists for true and recovered parameters
     parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_theta", "mu_omega_f", "mu_omega_p"]
     parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_f", "delta_omega_p"]
 
