@@ -99,7 +99,6 @@ def simulate_ORL(
         omega_p : float, 
         theta : float,
         n_trials : int = 100, 
-
         ):
     """
     Simulates behavioural data using the payoff structure and the ORL model.
@@ -207,6 +206,7 @@ def simulate_ORL(
 
 
 def simulate_ORL_group(
+        payoff : np.ndarray,
         n_subjects : int = 10,
         n_trials : int = 100,
         mu_a_rew : float = 0.3,
@@ -266,9 +266,6 @@ def simulate_ORL_group(
             sub_K[sub] = np.random.normal(mu_K, sigma_K)
         while sub_theta[sub] < 0 or sub_theta[sub] > 5:
             sub_theta[sub] = np.random.normal(mu_theta, sigma_theta)
-
-        # simulate data
-        payoff = create_payoff_structure(n_trials=n_trials)
 
         sub_data = simulate_ORL(
             payoff = payoff, 
