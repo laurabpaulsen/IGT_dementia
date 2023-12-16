@@ -34,8 +34,12 @@ parameters {
 
 model {
   // Hyperparameters
-  mu ~ normal(0, 1);
-  delta ~ normal(0, 1);
+  //mu ~ normal(0, 1);
+  //delta ~ normal(0, 1);
+  mu[1:2] ~ uniform(0, 1);
+  mu[3:6] ~ normal(0, 1);
+  delta[1:2] ~ normal(0, 1) T[-1, 1];
+  delta[3:6] ~ normal(0, 1);
 
   // group level parameters
   sigma_group1 ~ gamma(.1,.1);
@@ -158,9 +162,6 @@ generated quantities {
       pers  = rep_vector(1, 4);
       pers /= (1 + K[i]);
       util = softmax(initV*theta[i]);
-
-      pers  = initV; // initial pers values
-      util  = initV;
 
       for (t in 1:Tsubj[i]) {
         // softmax choice
