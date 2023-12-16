@@ -34,12 +34,8 @@ parameters {
 
 model {
   // Hyperparameters
-  //mu ~ normal(0, 1);
-  //delta ~ normal(0, 1);
-  mu[1:2] ~ uniform(0, 1);
-  mu[3:6] ~ normal(0, 1);
-  delta[1:2] ~ normal(0, 1) T[-1, 1];
-  delta[3:6] ~ normal(0, 1);
+  mu ~ normal(0, 1);
+  delta ~ normal(0, 1);
 
   // group level parameters
   sigma_group1 ~ gamma(.1,.1);
@@ -79,18 +75,17 @@ model {
     real PEfreq;
     real efChosen;
     real evChosen;
-    //real K_tr;
 
     // Initialize values
     ef    = initV;
     ev    = initV;
     pers  = rep_vector(1, 4);
     pers /= (1 + K[i]);
-    util = softmax(initV*theta[i]);
+    util = initV;
 
     for (t in 1:Tsubj[i]) {
       // softmax choice
-      choice[i, t] ~ categorical( util );
+      choice[i, t] ~ categorical( softmax(util*theta[i]));
 
       // Prediction error
       PEval  = outcome[i,t] - ev[ choice[i,t]];
@@ -120,7 +115,7 @@ model {
       pers /= (1 + K[i]);        // decay
 
       // Utility of expected value and perseverance times theta
-      util  = softmax((ev + ef * omega_f[i] + pers * omega_p[i])*theta[i]);
+      util  = ev + ef * omega_f[i] + pers * omega_p[i];
     }
   }
 }
@@ -161,14 +156,14 @@ generated quantities {
       ev    = initV;
       pers  = rep_vector(1, 4);
       pers /= (1 + K[i]);
-      util = softmax(initV*theta[i]);
+      util = initV;
 
       for (t in 1:Tsubj[i]) {
         // softmax choice
-        log_lik[i] += categorical_lpmf( choice[i, t] | util );
+        log_lik[i] += categorical_lpmf( choice[i, t] | softmax(util*theta[i]) );
 
         // generate posterior prediction for current trial
-        y_pred[i,t] = categorical_rng(util);
+        y_pred[i,t] = categorical_rng(softmax(util*theta[i]) );
 
         // Prediction error
         PEval  = outcome[i,t] - ev[ choice[i,t]];
@@ -198,7 +193,7 @@ generated quantities {
         pers /= (1 + K[i]);            // decay
 
         // Utility of expected value and perseverance
-        util  = softmax((ev + ef * omega_f[i] + pers * omega_p[i]) * theta[i]);
+        util  = ev + ef * omega_f[i] + pers * omega_p[i];
       }
     }
   }
