@@ -98,6 +98,8 @@ def plot_descriptive_adequacy(
     if savepath:
         plt.savefig(savepath)
 
+    plt.close()
+
 
 
 def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path):
@@ -133,6 +135,8 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     
     if savepath:
         plt.savefig(savepath)
+
+    plt.close()
 
 def plot_recovery_ax(ax, true, estimated, parameter_name):
     """
@@ -209,5 +213,7 @@ def plot_posteriors_violin(posteriors, parameter_names, trues = None, savepath =
 
     if savepath:
         plt.savefig(savepath)
+
+    plt.close()
 
 
