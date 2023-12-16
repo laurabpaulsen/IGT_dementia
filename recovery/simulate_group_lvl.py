@@ -12,6 +12,19 @@ sys.path.append(str(Path(__file__).parents[1]))
 from utils.simulate import simulate_ORL_group
 from utils.helper_functions import parse_n_subj_groups
 
+
+def payoff_structure(path):
+    """
+    loads the payoff structure from the data folder
+    """
+    payoff = pd.read_csv(path, usecols=["a_outcome", "b_outcome", "c_outcome", "d_outcome"], sep = ";")
+    payoff = payoff.to_numpy()
+
+    # scale by 100
+    payoff = payoff/100
+
+    return payoff
+
 if __name__ in "__main__":
     path = Path(__file__).parent
 
@@ -23,7 +36,8 @@ if __name__ in "__main__":
     # create output path if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
     
-
+    # load the payoff structure
+    payoff = payoff_structure(path / "payoff_structure.csv")
 
     for group in range(n_groups):
         mu_a_rew = np.random.uniform(0, 1)
@@ -37,6 +51,7 @@ if __name__ in "__main__":
 
 
         data = simulate_ORL_group(
+            payoff = payoff,
             n_subjects = n_subjects,
             mu_a_rew = mu_a_rew,
             mu_a_pun = mu_a_pun,
