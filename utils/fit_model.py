@@ -17,11 +17,7 @@ def fit_group_level(data, model_spec, savepath = None, summary = False):
         Path to save the fitted parameters to. The default is None.
     """
 
-    # make a design matrix that includes the intercept and the group variable (one line for each subject)
-    intercept = np.ones(data["sub"].nunique())
-
     group = np.array(data[data["trial"] == 1]["group"])
-    
 
     # reshape choice and outcome to N_subj x T
     choice = np.array(data["choice"]).reshape(data["sub"].nunique(), -1)
