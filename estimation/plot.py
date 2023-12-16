@@ -86,9 +86,3 @@ if __name__ in "__main__":
         chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
         savepath = outpath / "descriptive_adequacy.png"
         )
-
-    # print mean accuracy of each group
-    for group in [0, 1]:
-        group_inds = [ind for ind, g in enumerate([0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique()) if g == group]
-        group_mean = np.mean([percent_correct[ind] for ind in group_inds])
-        print(f"Mean accuracy of group {group}: {group_mean}")
