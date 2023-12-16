@@ -20,8 +20,8 @@ if __name__ in "__main__":
     HC_data["sub"] += AD_data["sub"].max() 
 
             
-    AD_data["group"] = -0.5
-    HC_data["group"] = 0.5
+    AD_data["group"] = 1
+    HC_data["group"] = 2
 
     data = pd.concat([AD_data, HC_data])
 
