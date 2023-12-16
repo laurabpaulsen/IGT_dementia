@@ -92,7 +92,7 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
         plot_posteriors_violin(
             posteriors = [data_rec[key][param_r] for param_r in parameters_r],
             parameter_names = parameters_r,
-            savepath = Path(__file__).parent / "fig" / f"{group_1}_{group_2}.png"
+            savepath = Path(__file__).parent / "fig" / "extra" / f"{group_1}_{group_2}.png"
         )
 
 
