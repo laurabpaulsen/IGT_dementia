@@ -57,7 +57,7 @@ def plot_descriptive_adequacy(
 
 
     # plot the accuracy
-    fig, ax = plt.subplots(1, 1, figsize = (5, 5), dpi = 300)
+    fig, ax = plt.subplots(1, 1, figsize = (7, 5), dpi = 300)
 
     # plot the accuracy as bar plot but color the bars according to the group
     if groups:
@@ -72,12 +72,12 @@ def plot_descriptive_adequacy(
     # plot the mean accuracy
     ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
     
-    # plot the mean for each group
-    if groups:
-        for group in group_labels:
-            group_inds = [ind for ind, g in enumerate(groups) if g == group]
-            group_mean = np.mean([percent_correct[ind] for ind in group_inds])
-            ax.axhline(group_mean, color = colours[group], linestyle = "solid", label = f"{group_labels[group]} mean accuarcy", linewidth = 0.5)
+    # group means
+    #if groups:
+    #    for group in group_labels:
+    #        group_inds = [ind for ind, g in enumerate(groups) if g == group]
+    #        group_mean = np.mean([percent_correct[ind] for ind in group_inds])
+    #        ax.axhline(group_mean, color = colours[group], linestyle = "solid", label = group_labels[group], linewidth = 0.5)
 
     
     # add labels for legend
