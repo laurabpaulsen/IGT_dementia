@@ -7,7 +7,7 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy
-from utils.helper_functions import chance_level, probit
+from utils.helper_functions import chance_level, inv_logit
 
 
 if __name__ in "__main__":
@@ -18,17 +18,16 @@ if __name__ in "__main__":
     est_data = pd.read_csv(inpath)
 
     # rename the columns
-    est_data.rename(
-        columns = {
-            "beta_p.2.1" : "delta_a_rew",
-            "beta_p.2.2" : "delta_a_pun",
-            "beta_p.2.3" : "delta_K",
-            "beta_p.2.4" : "delta_theta"
-            "beta_p.2.5" : "delta_omega_f",
-            "beta_p.2.6" : "delta_omega_p",
-        },
-        inplace = True
-    )
+    est_data.rename(columns = {"delta.1": "delta_a_rew", "delta.2": "delta_a_pun", "delta.3": "delta_K", "delta.4": "delta_theta", "delta.5": "delta_omega_p", "delta.6": "delta_omega_f"}, inplace = True)
+
+    for col in est_data.columns[:20]:
+        print(col)
+
+        # print the mean and the 95% HDI
+        print(f"Mean: {np.mean(est_data[col])}")
+        print(f"max: {np.max(est_data[col])}")
+        print(f"min: {np.min(est_data[col])}")
+
 
     AD_data = pd.read_csv(path / "data" / "AD" / "data_AD_all_subjects.csv")
     HC_data = pd.read_csv(path / "data" / "HC" / "data_HC_all_subjects.csv")
@@ -46,21 +45,11 @@ if __name__ in "__main__":
     # plot the posterior densities of the parameters
     parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_p", "delta_omega_f"]
 
-    densities = []
-    for param in parameters:
-        if param in ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta"]:
-            dens = np.array(probit(est_data[param]))
-            
-            if param in ["delta_K", "delta_theta"]:
-                dens = dens * 5
-        else:
-            dens = np.array(est_data[param])
-        
-        densities.append(dens)
+    posteriors = [np.array(est_data[param]) for param in parameters]
 
-    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \\theta$", "$\Delta \omega_{p}$", "$\Delta \omega_{f}$"]
+    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \\theta$", "$\Delta \omega_P$", "$\Delta \omega_F$"]
 
-    plot_posteriors_violin(densities, parameter_names, savepath = outpath / "posterior_densities.png")
+    plot_posteriors_violin(posteriors, parameter_names, savepath = outpath / "posterior_densities.png")
 
     pred_choices = []
     # get the predicted choices
@@ -78,7 +67,6 @@ if __name__ in "__main__":
         tmp_data = data[data["sub"] == sub]
         choices.append(tmp_data["choice"].to_list())
 
-    
     # plot the descriptive adequacy of the model
     plot_descriptive_adequacy(
         choices, 
@@ -98,3 +86,9 @@ if __name__ in "__main__":
         chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
         savepath = outpath / "descriptive_adequacy.png"
         )
+
+    # print mean accuracy of each group
+    for group in [0, 1]:
+        group_inds = [ind for ind, g in enumerate([0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique()) if g == group]
+        group_mean = np.mean([percent_correct[ind] for ind in group_inds])
+        print(f"Mean accuracy of group {group}: {group_mean}")
