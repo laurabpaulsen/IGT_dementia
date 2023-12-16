@@ -121,7 +121,6 @@ generated quantities {
       ev    = initV;
       pers  = initV; // initial pers values
       util  = softmax(initV*theta);
-      //K_tr = pow(3, K) - 1;
       log_lik = 0;
 
       for (t in 1:T) {
