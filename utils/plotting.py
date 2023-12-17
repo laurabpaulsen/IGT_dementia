@@ -2,6 +2,7 @@
 Plotting module for the project. Functions are used for both parameter recovery and parameter estimation.
 """
 import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
 import numpy as np
 
@@ -216,4 +217,98 @@ def plot_posteriors_violin(posteriors, parameter_names, trues = None, savepath =
 
     plt.close()
 
+
+
+
+def plot_compare_posteriors(posteriors_1:list[list[float]], posteriors_2:list[list[float]], parameter_names:list[str], group_labels:list[str], savepath: Path = None):
+    """
+    Plot the posterior densities of two sets of parameters to compare them.
+
+    Parameters
+    ----------
+    posteriors_1 : list of np.arrays
+        List of posteriors.
+    posteriors_2 : list of np.arrays
+        List of posteriors.
+    parameter_names : list of str   
+        List of parameter names.
+    group_labels : list of str
+        List of group labels.
+    savepath : Path, optional
+        Path to save the figure to. The default is None.
+    """
+
+    fig, axes = plt.subplots(2, 3, figsize = (10, 7), dpi = 300)
+    
+    for posterior_1, posterior_2, parameter_name, ax in zip(posteriors_1, posteriors_2, parameter_names, axes.flatten()):
+        plot_compare_posterior_ax(ax, posterior_1, posterior_2, parameter_name, group_labels)
+
+    
+    # legend on the last axis
+    axes[-1, -1].legend()
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
+
+    plt.close()
+
+def plot_compare_posterior_ax(ax, posterior_1, posterior_2, parameter_name, group_labels):
+    """
+    Helper function for plot_compare_posteriors
+    """
+    
+    # use seaborn for density plots
+    sns.kdeplot(posterior_1, ax = ax, color = colours[0], fill = True, label = group_labels[0])
+    sns.kdeplot(posterior_2, ax = ax, color = colours[1], fill = True, label = group_labels[1])
+
+    ax.set_title(parameter_name)
+
+
+
+def plot_compare_prior_posteriors(priors:list[list[float]], posteriors_1:list[list[float]], posteriors_2:list[list[float]], parameter_names:list[str], group_labels:list[str], savepath: Path = None):
+    """
+    Plot the posterior densities of two sets of parameters to compare them.
+
+    Parameters
+    ----------
+    priors : list of np.arrays
+        List of priors.
+    posteriors_1 : list of np.arrays
+        List of posteriors.
+    posteriors_2 : list of np.arrays
+        List of posteriors.
+    parameter_names : list of str   
+        List of parameter names.
+    group_labels : list of str
+        List of group labels.
+    savepath : Path, optional
+        Path to save the figure to. The default is None.
+    """
+
+    fig, axes = plt.subplots(2, 3, figsize = (10, 7), dpi = 300)
+    
+    for prior, posterior_1, posterior_2, parameter_name, ax in zip(priors, posteriors_1, posteriors_2, parameter_names, axes.flatten()):
+        plot_compare_prior_posterior_ax(ax, prior, posterior_1, posterior_2, parameter_name, group_labels)
+    
+    # legend on the last axis
+    axes[-1, -1].legend()
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
+
+    plt.close()
+
+def plot_compare_prior_posterior_ax(ax, prior, posterior_1, posterior_2, parameter_name, group_labels):
+    """
+    Helper function for plot_compare_posteriors
+    """
+    
+    # use seaborn for density plots
+    sns.kdeplot(prior, ax = ax, color = "black", linestyle = "dashed", fill = False, label = "Prior", linewidth = 1)
+    sns.kdeplot(posterior_1, ax = ax, color = colours[0], fill = True, label = group_labels[0])
+    sns.kdeplot(posterior_2, ax = ax, color = colours[1], fill = True, label = group_labels[1])
+
+    ax.set_title(parameter_name)
 
