@@ -28,9 +28,9 @@ if __name__ == "__main__":
         data = pd.read_csv(sim_path)
 
         if theta_bool:
-            model_path = path.parent / "IGT_ORL.stan"
+            model_path = path.parent / "models" / "IGT_ORL.stan"
         else:
-            model_path = path.parent / "IGT_ORL_no_theta.stan"
+            model_path = path.parent /  "models" / "IGT_ORL_no_theta.stan"
 
         with open(model_path, "r") as file:
             model_spec = file.read()

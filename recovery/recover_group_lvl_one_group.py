@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if not outpath.exists():
         outpath.mkdir(parents = True)
 
-    with open(path.parent / "hierachical_IGT_ORL_one_group.stan") as f:
+    with open(path.parent / "models" / "hierachical_IGT_ORL.stan") as f:
         model_spec = f.read()
 
  

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if not outpath.exists():
         outpath.mkdir(parents = True)
 
-    with open(path.parent / "hierachical_IGT_ORL.stan") as f:
+    with open(path.parent / "models" / "hierachical_IGT_ORL_compare.stan") as f:
         model_spec = f.read()
 
     # make a list of tuples with all combinations of groups (don't want to compare group 1 with group 1 or group 1 with group 2 and group 2 with group 1)
