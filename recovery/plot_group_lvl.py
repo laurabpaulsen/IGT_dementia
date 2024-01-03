@@ -62,9 +62,8 @@ def load_recovered(path : Path) -> dict:
             "delta_a_rew" : data_tmp["delta.1"],
             "delta_a_pun" : data_tmp["delta.2"],
             "delta_K" : data_tmp["delta.3"],
-            "delta_theta" : data_tmp["delta.4"],
-            "delta_omega_f" : data_tmp["delta.5"],
-            "delta_omega_p" : data_tmp["delta.6"],
+            "delta_omega_f" : data_tmp["delta.4"],
+            "delta_omega_p" : data_tmp["delta.5"],
             "y_pred" : data_tmp[y_pred_cols]
             }
 
@@ -114,8 +113,8 @@ if __name__ == "__main__":
     data_sim = load_simulated(path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
     data_rec = load_recovered(path / "fit" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
 
-    parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_theta", "mu_omega_f", "mu_omega_p"]
-    parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_f", "delta_omega_p"]
+    parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_omega_f", "mu_omega_p"]
+    parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_f", "delta_omega_p"]
 
     # get the true and recovered parameters
     t, r = get_true_recovered(parameters_t, parameters_r, data_sim, data_rec)
