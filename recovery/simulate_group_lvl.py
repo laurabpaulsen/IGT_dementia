@@ -43,12 +43,10 @@ if __name__ in "__main__":
         mu_a_rew = np.random.uniform(0, 1)
         mu_a_pun = np.random.uniform(0, 1)
 
-
         mu_K = np.random.uniform(0, 5)
         mu_omega_f = np.random.uniform(-2, 2)
         mu_omega_p = np.random.uniform(-2, 2)
-        mu_theta = np.random.uniform(0, 5)
-
+        mu_theta = 1
 
         data = simulate_ORL_group(
             payoff = payoff,
