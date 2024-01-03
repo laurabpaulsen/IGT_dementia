@@ -171,3 +171,7 @@ estimation/data/*
 trash/*
 
 recovery/fig/extra/*
+
+
+# ignore -workspace
+*.code-workspace
