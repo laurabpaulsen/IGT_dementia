@@ -25,7 +25,7 @@ if __name__ in "__main__":
 
     data = pd.concat([AD_data, HC_data])
 
-    with open(path.parent / "hierachical_IGT_ORL.stan") as f:
+    with open(path.parent / "models" / "hierachical_IGT_ORL_compare.stan") as f:
         model_spec = f.read()
     
     summary = fit_group_level(
