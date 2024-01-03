@@ -2,6 +2,7 @@
 Plotting module for the project. Functions are used for both parameter recovery and parameter estimation.
 """
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 from pathlib import Path
 import numpy as np
@@ -311,4 +312,53 @@ def plot_compare_prior_posterior_ax(ax, prior, posterior_1, posterior_2, paramet
     sns.kdeplot(posterior_2, ax = ax, color = colours[1], fill = True, label = group_labels[1])
 
     ax.set_title(parameter_name)
+
+
+
+def plot_posterior_ax(ax, prior, posterior, parameter_name):
+    sns.kdeplot(prior, ax = ax, color = "black", linestyle = "dashed", fill = False, label = "Prior", linewidth = 1)
+    
+    credible_interval = np.quantile(posterior, [0.025, 0.975])
+    
+    # only plot the credible interval
+    sns.kdeplot(posterior, ax = ax, color = "steelblue", fill = True, label = "Posterior", clip = (credible_interval[0], credible_interval[1]), alpha = 0.4, linewidth = 0.00001)
+
+    # plot posterior with different colors for the credible interval
+    sns.kdeplot(posterior, ax = ax, color = "steelblue", fill = False, label = "Posterior", alpha = 1, linewidth = 2)
+    
+
+    ax.set_title(parameter_name)
+
+def plot_posterior(priors:list[list[float]], posteriors:list[list[float]], parameter_names:[list[str]], savepath: Path = None):
+
+    fig, axes = plt.subplots(3, 2, figsize = (9, 10), dpi = 300)
+
+    for prior, posterior, ax, param in zip(priors, posteriors, axes.flatten(), parameter_names):
+        plot_posterior_ax(ax, prior, posterior, param)
+
+
+    # dashed line for the prior, solid line for the posterior, and fill the area in between 
+    custom_lines = [plt.Line2D([0], [0], color = "black", linestyle = "dashed", lw = 1),
+                    plt.Line2D([0], [0], color = "steelblue", lw = 2),
+                    Patch(facecolor = "steelblue", alpha = 0.4)]
+
+    axes[0, 0].legend(custom_lines, ["Prior", "Posterior", "95% CI"])
+
+    # if there is an empty axis, remove it
+    for ax in axes.flatten():
+        if not ax.get_title():
+            fig.delaxes(ax)
+
+    # make legend on the last axis
+    
+    # prep stuff to put in the legend
+    
+
+
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
+
+
 

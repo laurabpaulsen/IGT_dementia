@@ -6,7 +6,7 @@ import numpy as np
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy
+from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy, plot_posterior
 from utils.helper_functions import chance_level, inv_logit
 
 
@@ -18,15 +18,7 @@ if __name__ in "__main__":
     est_data = pd.read_csv(inpath)
 
     # rename the columns
-    est_data.rename(columns = {"delta.1": "delta_a_rew", "delta.2": "delta_a_pun", "delta.3": "delta_K", "delta.4": "delta_theta", "delta.5": "delta_omega_p", "delta.6": "delta_omega_f"}, inplace = True)
-
-    for col in est_data.columns[:20]:
-        print(col)
-
-        # print the mean and the 95% HDI
-        print(f"Mean: {np.mean(est_data[col])}")
-        print(f"max: {np.max(est_data[col])}")
-        print(f"min: {np.min(est_data[col])}")
+    est_data.rename(columns = {"delta.1": "delta_a_rew", "delta.2": "delta_a_pun", "delta.3": "delta_K", "delta.4": "delta_omega_p", "delta.5": "delta_omega_f"}, inplace = True)
 
 
     AD_data = pd.read_csv(path / "data" / "AD" / "data_AD_all_subjects.csv")
@@ -43,13 +35,21 @@ if __name__ in "__main__":
 
 
     # plot the posterior densities of the parameters
-    parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_theta", "delta_omega_p", "delta_omega_f"]
+    parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_p", "delta_omega_f"]
 
     posteriors = [np.array(est_data[param]) for param in parameters]
 
-    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \\theta$", "$\Delta \omega_P$", "$\Delta \omega_F$"]
+    # normal distributed priors
+    prior1 = np.random.normal(0, 1, 1000)
 
-    plot_posteriors_violin(posteriors, parameter_names, savepath = outpath / "posterior_densities.png")
+    parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta K$", "$\Delta \omega_P$", "$\Delta \omega_F$"]
+    priors = [prior1] * 5
+
+    plot_posterior(priors, posteriors, parameter_names, savepath = outpath / "posterior_densities_priors.png")
+
+
+
+    #plot_posteriors_violin(posteriors, parameter_names, savepath = outpath / "posterior_densities.png")
 
     pred_choices = []
     # get the predicted choices
