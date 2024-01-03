@@ -2,11 +2,11 @@
 data {
   int<lower=1> N; // number of subjecs
   int<lower=1> T; // maxiumum number of trials
-  int<lower=1, upper=T> Tsubj[N]; // trials per subject
-  int choice[N, T]; // choices made
-  real outcome[N, T]; // oucomes
-  real sign_out[N, T]; // sign of outcome
-  int group[N]; // which group the subject belongs to (1 or 2)
+  array[N] int<lower=1, upper=T> Tsubj; // trials per subject
+  array[N, T] int choice; // choices made
+  array[N, T] real outcome; // oucomes
+  array[N, T] real sign_out; // sign of outcome
+  array[N] int group; // which group the subject belongs to (1 or 2)
 }
 
 transformed data {
@@ -34,8 +34,10 @@ parameters {
 
 model {
   // Hyperparameters
+  //CHANGED (truncated mu)
   mu ~ normal(0, 1);
-  delta ~ normal(0, 1);
+  delta[1:2] ~ normal(0, 1) T[-1, 1];
+  delta[3:6] ~ normal(0, 1);
 
   // group level parameters
   sigma_group1 ~ gamma(.1,.1);
@@ -123,10 +125,10 @@ model {
 generated quantities {
 
   // For log likelihood calculation
-  real log_lik[N];
+  array[N] real log_lik;
 
   // For posterior predictive check
-  real y_pred[N,T];
+  array[N,T] real y_pred;
 
   // Set all posterior predictions to -1 (avoids NULL values)
   for (i in 1:N) {
