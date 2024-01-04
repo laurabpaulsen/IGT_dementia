@@ -7,7 +7,7 @@ import numpy as np
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy, plot_posterior
-from utils.helper_functions import chance_level, inv_logit
+from utils.helper_functions import chance_level
 
 
 if __name__ in "__main__":
@@ -50,39 +50,3 @@ if __name__ in "__main__":
 
 
     #plot_posteriors_violin(posteriors, parameter_names, savepath = outpath / "posterior_densities.png")
-
-    pred_choices = []
-    # get the predicted choices
-    for sub in range(1, n_subjects+1):
-        pred_choices_sub = []
-        
-        for t in range(1, 101):
-            pred_choices_sub.append(mode(est_data[f"y_pred.{sub}.{t}"]))
-
-        pred_choices.append(pred_choices_sub)
-
-    # get the actual choices 
-    choices = []
-    for sub in data["sub"].unique():
-        tmp_data = data[data["sub"] == sub]
-        choices.append(tmp_data["choice"].to_list())
-
-    # plot the descriptive adequacy of the model
-    plot_descriptive_adequacy(
-        choices, 
-        pred_choices, 
-        groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
-        group_labels = {0: "AD", 1: "HC"},
-        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
-        sort_accuracy = True,
-        savepath = outpath / "descriptive_adequacy_sorted.png"
-        )
-
-    plot_descriptive_adequacy(
-        choices, 
-        pred_choices, 
-        groups = [0] * AD_data["sub"].nunique()+ [1] * HC_data["sub"].nunique(),
-        group_labels = {0: "AD", 1: "HC"},
-        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
-        savepath = outpath / "descriptive_adequacy.png"
-        )
