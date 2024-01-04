@@ -111,7 +111,7 @@ def plot_descriptive_adequacy(
 
 
 
-def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path):
+def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path, standardize:bool = False):
     """
     Plot the recovery of the parameters.
 
@@ -125,6 +125,8 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
         List of parameter names.
     savepath : Path
         Path to save the figure to.
+    standardize : bool, optional
+        If True, standardize the estimated parameters. The default is False.
     
     Returns
     -------
@@ -133,7 +135,13 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     fig, axes = plt.subplots(2, len(trues) // 2 + (len(trues) % 2 > 0), figsize = (10, 7), dpi = 300)
     
     for true, estimated, parameter_name, axis in zip(trues, estimateds, parameter_names, axes.flatten()):
-        plot_recovery_ax(axis, true, estimated, parameter_name)
+        if standardize:
+            # normalise in the range of the true parameter
+            estimated = (estimated - np.min(estimated)) / (np.max(estimated) - np.min(estimated)) * (np.max(true) - np.min(true)) + np.min(true)
+            y_label = "Estimated (scaled)"
+        else:
+            y_label = "Estimated"
+        plot_recovery_ax(axis, true, estimated, parameter_name, y_label)
 
     # if any of the axes is empty, remove it
     for axis in axes.flatten():
@@ -147,7 +155,7 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
 
     plt.close()
 
-def plot_recovery_ax(ax, true, estimated, parameter_name):
+def plot_recovery_ax(ax, true, estimated, parameter_name, ylabel = "Estimated"):
     """
     Helper function for plot_recoveries
     """
@@ -167,7 +175,7 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     ax.plot(lin_space, intercept + corr*lin_space, color = "steelblue", linestyle = "solid", linewidth = 0.5)
 
     ax.set_xlabel("True")
-    ax.set_ylabel("Estimated")
+    ax.set_ylabel(ylabel)
     ax.set_title(parameter_name)
 
 
