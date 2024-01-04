@@ -120,14 +120,14 @@ if __name__ == "__main__":
     t, r = get_true_recovered(parameters_t, parameters_r, data_sim, data_rec)
 
     # Extract individual lists for true and recovered parameters
-    a_rew_t, a_pun_t, K_t, theta_t, omega_f_t, omega_p_t = t.values()
-    a_rew_r, a_pun_r, K_r, theta_r, omega_f_r, omega_p_r = r.values()
+    a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t = t.values()
+    a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r = r.values()
 
 
     # plot the recovery of the parameters
     plot_recoveries(
-        trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t, theta_t,],
-        estimateds = [a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r, theta_r],
-        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta  \omega_F$", "$\Delta  \omega_P$", "$\Delta \\theta$", ],
+        trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t,],
+        estimateds = [a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r],
+        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta  \omega_F$", "$\Delta  \omega_P$"],
         savepath = fig_path / "hierachical_parameter_recovery_ORL.png"
     )
