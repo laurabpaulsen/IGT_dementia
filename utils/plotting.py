@@ -15,12 +15,13 @@ from helper_functions import maximum_posterior_density
 colours = ["steelblue", "lightblue"]
 
 def plot_descriptive_adequacy(
-    choices, 
-    pred_choices, 
+    group1_choices,
+    group2_choices,
+    group1_pred_choices,
+    group2_pred_choices, 
     groups = None, 
     group_labels:dict = None, 
     chance_level = None, 
-    sort_accuracy = False,
     savepath: Path = None
     ):
     """
@@ -41,38 +42,48 @@ def plot_descriptive_adequacy(
     """
 
     # Calculate the correct choices per participant
-    n_sub = len(pred_choices)
-    percent_correct = []
+    percent_correct_group1 = []
+    percent_correct_group2 = []
     
-    for sub in range(n_sub):
-        correct = [choice == pred_choice for choice, pred_choice in zip(choices[sub], pred_choices[sub])]
-        sum_correct = sum(correct)
-        sum_choices = len(choices[sub])
-        percent_correct.append(sum_correct/sum_choices*100)
+    for choices, pred_choices in zip(group1_choices, group1_pred_choices):
+        percent_correct_group1.append(sum([choice == pred_choice for choice, pred_choice in zip(choices, pred_choices)]) / len(choices))
+    
+    for choices, pred_choices in zip(group2_choices, group2_pred_choices):
+        percent_correct_group2.append(sum([choice == pred_choice for choice, pred_choice in zip(choices, pred_choices)]) / len(choices))
+    
 
-    if sort_accuracy:
-        sort_inds = np.argsort(percent_correct)[::-1]
-        percent_correct = [percent_correct[ind] for ind in sort_inds]
+    percent_correct_group1 = [percent_correct*100 for percent_correct in percent_correct_group1]
+    percent_correct_group2 = [percent_correct*100 for percent_correct in percent_correct_group2]
 
-        if groups:
-            groups = [groups[ind] for ind in sort_inds]
+    fig, axes = plt.subplots(1, 2, figsize = (7, 5), dpi = 300)
 
+    # plot the descriptive adequacy
+    axes[0].bar(range(len(percent_correct_group1)), percent_correct_group1, color = colours[0], label = group_labels[0])
+    axes[0].axhline(np.mean(percent_correct_group1), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 1)
 
-    # plot the accuracy
-    fig, ax = plt.subplots(1, 1, figsize = (7, 5), dpi = 300)
+    axes[1].bar(range(len(percent_correct_group2)), percent_correct_group2, color = colours[1], label = group_labels[1])
+    axes[1].axhline(np.mean(percent_correct_group2), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 1)
+    
+    for i, ax in enumerate(axes):
+        ax.set_ylim(0, 100)
+        ax.set_xlabel("Participants")
+        ax.set_ylabel("Percent correct")
+        ax.set_title(f"{group_labels[i]}")
+        # remove the xticks
+        ax.set_xticks([])
 
-    # plot the accuracy as bar plot but color the bars according to the group
-    if groups:
-        ax.bar(range(1, n_sub + 1), percent_correct, color = [colours[group] for group in groups])
-    else:
-        ax.bar(range(1, n_sub + 1), percent_correct)
     
     # plot the chance level
     if chance_level:
-        ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
+        for ax in axes:
+            ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 1)
 
-    # plot the mean accuracy
-    ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
+    for ax in axes:
+        ax.legend()
+
+
+   #for ax in axes:
+    #    ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
     
     # group means
     #if groups:
@@ -83,17 +94,13 @@ def plot_descriptive_adequacy(
 
     
     # add labels for legend
-    if group_labels:
-        for group in group_labels:
-            ax.bar([0], [0], color = colours[group], label = group_labels[group])
+    #if group_labels:
+    #    for group in group_labels:
+    #        ax.bar([0], [0], color = colours[group], label = group_labels[group])
     
-    if chance_level or group_labels:
-        ax.legend()
+    #if chance_level or group_labels:
+    #    ax.legend()
 
-    ax.set_xlabel("Subject")
-    ax.set_ylabel("Accuracy [%]")
-
-    ax.set_xlim(0.5, n_sub + 0.5)
     
     plt.tight_layout()
 
