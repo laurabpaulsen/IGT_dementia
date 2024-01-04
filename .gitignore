@@ -167,6 +167,7 @@ cython_debug/
 
 # data files
 estimation/data/*
+estimation/data_replicate/*
 
 trash/*
 
@@ -175,3 +176,6 @@ recovery/fig/extra/*
 
 # ignore -workspace
 *.code-workspace
+
+*/old/*
+
