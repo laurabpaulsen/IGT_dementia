@@ -2,7 +2,6 @@ import pandas as pd
 from pathlib import Path
 from statistics import mode
 import numpy as np
-import arviz as az
 import matplotlib.pyplot as plt
 
 # local imports
@@ -11,7 +10,7 @@ sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_descriptive_adequacy
 from utils.helper_functions import chance_level
 
-
+#colours = ["#588c7e", "#f2e394", "steelblue", "#d96459"]
 def investigate_descriptive_adquacy(AD_data, HC_data, est_data, outpath):
     
     pred_choices_ad = []
@@ -51,6 +50,79 @@ def investigate_descriptive_adquacy(AD_data, HC_data, est_data, outpath):
 
 
 
+def plot_traceplots(data, parameter_names = None, savepath = None):
+
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    for i, key in enumerate(data.keys()):
+        for chain in range(n_chains):
+            axes[i].plot(data[key][chain], label = f"chain {chain+1}", linewidth = 0.5,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(data[key][chain]))
+        
+        
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+    
+    plt.tight_layout()
+    plt.legend()
+    if savepath:
+        plt.savefig(savepath)
+
+def plot_trankplot(data, parameter_names = None, savepath = None):
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    # join the chains for each parameter to get rankplot
+    for i, key in enumerate(data.keys()):
+        tmp_data = np.concatenate(data[key])
+
+        # get the indices of the sorted array
+        ranks = np.argsort(tmp_data)
+
+        # get the ranks for each chain
+        tmp_data = [ranks[i::n_chains] for i in range(n_chains)]
+
+        step_size = 10
+        print(len(tmp_data[0]))
+        # get the count of within each step
+        tmp_data = [np.array([np.sum((i <= tmp_data[chain]) & (tmp_data[chain] < i+step_size)) for i in range(0, len(tmp_data[chain]), step_size)]) for chain in range(n_chains)]
+
+    
+        # plot the rankplot
+        for chain in range(n_chains):
+            axes[i].step(np.arange(0, len(tmp_data[chain])),tmp_data[chain], label = f"chain {chain+1}", linewidth = 1,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(tmp_data[chain]))
+
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+
+    for ax in axes:
+        # set the ticks to none 
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        # get y limits
+        y_min, y_max = ax.get_ylim()
+        ax.set_ylim(-1, y_max)
+
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
+
 if __name__ == "__main__":
     path = Path(__file__).parent
 
@@ -77,19 +149,20 @@ if __name__ == "__main__":
 
     # plot traceplots of the parameters
     parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_p", "delta_omega_f"]
+    parameter_names = [r"$\Delta A_{rew}$", r"$\Delta A_{pun}$", r"$\Delta K$", r"$\Delta \omega_{p}$", r"$\Delta \omega_{f}$"]
+
 
     # convert the data to the correct format
     traceplot_data = est_data[parameters]
     traceplot_data = traceplot_data.to_dict(orient = "list")
     # split each key into 4 list (one for each chain)
-    traceplot_data = {key: [est_data[key][i::4] for i in range(4)] for key in est_data.keys()}
+    traceplot_data = {key: [traceplot_data[key][i::4] for i in range(4)] for key in traceplot_data.keys()}
 
-    backend_kwargs = {"dpi" : 300, "figsize" : (12, 10)}
+    plot_traceplots(traceplot_data, parameter_names, savepath = outpath / "traceplot.png")
 
-    az.plot_trace(traceplot_data, var_names = parameters, backend_kwargs = backend_kwargs)
-    
-    plt.savefig(outpath / f"traceplot.png")
+    plot_trankplot(traceplot_data, parameter_names, savepath = outpath / "rankplot.png")
 
-    investigate_descriptive_adquacy(AD_data, HC_data, est_data, outpath)
+
+    #investigate_descriptive_adquacy(AD_data, HC_data, est_data, outpath)
 
     
