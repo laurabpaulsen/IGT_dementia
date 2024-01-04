@@ -44,8 +44,8 @@ transformed parameters{
   vector[5] mu_1; // mean parameters group 1
   vector[5] mu_2; // mean parameters group 2
 
-  mu_1 = mu + delta/2;
-  mu_2 = mu - delta/2;
+  mu_1 = mu - delta/2;
+  mu_2 = mu + delta/2;
 
   // modelling each parameter for each subject according to the overall mean and the difference between the groups (with a group level standard deviation)
   for(n in 1:N){
