@@ -19,6 +19,9 @@ def fit_group_level(data, model_spec, savepath = None, summary = False):
 
     group = np.array(data[data["trial"] == 1]["group"])
 
+    # get the number of trials per particpants (lines with trial != 0)
+    Tsubj = [data[data["sub"]==i]["trial"].max() for i in data["sub"].unique()]
+
     # reshape choice and outcome to N_subj x T
     choice = np.array(data["choice"]).reshape(data["sub"].nunique(), -1)
     outcome = np.array(data["outcome"]).reshape(data["sub"].nunique(), -1)
@@ -28,7 +31,7 @@ def fit_group_level(data, model_spec, savepath = None, summary = False):
         "outcome" : outcome,
         "sign_out" : sign_out,
         "N": data["sub"].nunique(),
-        "Tsubj": data.groupby("sub").size().values,
+        "Tsubj":Tsubj,
         "T": 100,
         "group" : group
     }
