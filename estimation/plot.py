@@ -9,14 +9,29 @@ sys.path.append(str(Path(__file__).parents[1]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy, plot_posterior
 from utils.helper_functions import chance_level
 
+def credible_interval_table(posterior_dict):
+    """
+    Create a table with the 95% credible intervals for each parameter.
+    """
+    # get the 95% credible interval for each parameter
+    credible_intervals = [np.quantile(posterior_dict[param], [0.025, 0.975]) for param in posterior_dict.keys()]
+
+    # create a dataframe
+    df = pd.DataFrame(credible_intervals, index = posterior_dict.keys(), columns = ["lower", "upper"])
+
+    return df
 
 if __name__ in "__main__":
     path = Path(__file__).parent
 
     outpath = path / "fig"
+    resultspath = path / "results"
 
     if not outpath.exists():
         outpath.mkdir(parents = True)
+    
+    if not resultspath.exists():
+        resultspath.mkdir(parents = True)
 
     parameters = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_p", "delta_omega_f"]
 
@@ -45,4 +60,11 @@ if __name__ in "__main__":
             savepath = figpath
         )
 
+        # make a dicitonary with the parameters and the posteriors
+        posterior_dict = dict(zip(parameters, posteriors))
 
+        # create a table with the credible intervals
+        table = credible_interval_table(posterior_dict)
+        table = table.round(2)
+
+        table.to_csv(resultspath / f"credible_intervals{file_end}.csv")
