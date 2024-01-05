@@ -377,3 +377,77 @@ def plot_posterior(priors:list[list[float]], posteriors:list[list[float]], param
 
 
 
+
+
+
+def plot_traceplots(data, parameter_names = None, savepath = None):
+
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    for i, key in enumerate(data.keys()):
+        for chain in range(n_chains):
+            axes[i].plot(data[key][chain], label = f"chain {chain+1}", linewidth = 0.5,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(data[key][chain]))
+        
+        
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+    
+    plt.tight_layout()
+    plt.legend()
+    if savepath:
+        plt.savefig(savepath)
+
+def plot_trankplot(data, parameter_names = None, savepath = None):
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    # join the chains for each parameter to get rankplot
+    for i, key in enumerate(data.keys()):
+        tmp_data = np.concatenate(data[key])
+
+        # get the indices of the sorted array
+        ranks = np.argsort(tmp_data)
+
+        # get the ranks for each chain
+        tmp_data = [ranks[i::n_chains] for i in range(n_chains)]
+
+        step_size = 10
+        # get the count of within each step
+        tmp_data = [np.array([np.sum((i <= tmp_data[chain]) & (tmp_data[chain] < i+step_size)) for i in range(0, len(tmp_data[chain]), step_size)]) for chain in range(n_chains)]
+
+    
+        # plot the rankplot
+        for chain in range(n_chains):
+            axes[i].step(np.arange(0, len(tmp_data[chain])),tmp_data[chain], label = f"chain {chain+1}", linewidth = 1,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(tmp_data[chain]))
+
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+
+    for ax in axes:
+        # set the ticks to none 
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        # get y limits
+        y_min, y_max = ax.get_ylim()
+        ax.set_ylim(-1, y_max)
+
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
