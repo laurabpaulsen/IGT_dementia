@@ -166,8 +166,8 @@ cython_debug/
 *.csv
 
 # data files
-estimation/data/*
-estimation/data_replicate/*
+estimation/data2/*
+estimation/data1/*
 
 trash/*
 
