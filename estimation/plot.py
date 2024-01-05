@@ -43,7 +43,7 @@ def bayes_factor_table(posterior_dict, prior_dict):
         posterior_density_at_0 = posterior_density(0)
 
         # calculate the Bayes factor
-        bayes_factor = posterior_density_at_0 / prior_density_at_0 
+        bayes_factor = prior_density_at_0 / posterior_density_at_0
 
         data_dict = {
             "param" : param,
@@ -52,7 +52,7 @@ def bayes_factor_table(posterior_dict, prior_dict):
             "bayes_factor" : bayes_factor
         }
 
-        tmp = pd.DataFrame.from_dict(data_dict, orient = "index").T
+        tmp = pd.DataFrame.from_dict(data_dict)
         data = pd.concat([data, tmp], axis = 0)
 
 
@@ -108,5 +108,6 @@ if __name__ in "__main__":
 
         # create a table with the Bayes factors
         table = bayes_factor_table(posterior_dict, prior_dict)
+        #table = table.round(2)
 
         table.to_csv(resultspath / f"bayes_factors{file_end}.csv", index = False)
