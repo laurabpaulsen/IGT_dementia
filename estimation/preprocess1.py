@@ -56,7 +56,7 @@ if __name__ == "__main__":
     path = Path(__file__).parent
 
     # data path
-    data_path = path / "data"
+    data_path = path / "data1"
 
     for group in ["AD", "HC", "MCI"]:
         group_path = data_path / group

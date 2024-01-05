@@ -11,12 +11,12 @@ from utils.fit_model import fit_group_level
 
 if __name__ in "__main__":
     path = Path(__file__).parent
-    outpath = path / "fit" / "param_est_HC_AD.csv"
-    summary_path = path / "fit" / "param_est_HC_AD_summary.csv"
+    outpath = path / "fit" / "param_est_HC_AD_1.csv"
+    summary_path = path / "fit" / "param_est_HC_AD_summary_1.csv"
 
     # load data
-    AD_data = pd.read_csv(path / "data" / "AD" / "data_AD_all_subjects.csv")
-    HC_data = pd.read_csv(path / "data" / "HC" / "data_HC_all_subjects.csv")
+    AD_data = pd.read_csv(path / "data1" / "AD" / "data_AD_all_subjects.csv")
+    HC_data = pd.read_csv(path / "data1" / "HC" / "data_HC_all_subjects.csv")
     HC_data["sub"] += AD_data["sub"].max() 
 
             

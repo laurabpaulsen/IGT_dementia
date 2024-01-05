@@ -47,12 +47,13 @@ def load_IGT_excel_data(path):
 
 if __name__ in "__main__":
     path = Path(__file__).parent
+    data_path = path / "data2"
 
-    HC = load_IGT_excel_data(path / "data_replicate" / "IGT_E-Data_controles.xlsx")
-    HC.to_csv(path / "data_replicate" / "healthy_controls.csv", index = False)
+    HC = load_IGT_excel_data(data_path / "IGT_E-Data_controles.xlsx")
+    HC.to_csv(data_path / "healthy_controls.csv", index = False)
 
-    AD = load_IGT_excel_data(path / "data_replicate" / "IGT_E-Data_patients.xlsx")
-    AD.to_csv(path / "data_replicate" / "alzheimer_disease.csv", index = False)
+    AD = load_IGT_excel_data(data_path / "IGT_E-Data_patients.xlsx")
+    AD.to_csv(data_path / "alzheimer_disease.csv", index = False)
 
 
     
