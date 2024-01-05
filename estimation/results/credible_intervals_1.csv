@@ -1,6 +1,6 @@
-,lower,upper
-delta_a_rew,0.26,1.29
-delta_a_pun,0.22,0.86
-delta_K,-1.17,0.02
-delta_omega_p,-0.41,1.76
-delta_omega_f,-1.39,2.16
+param,CI_low,CI_high,MLE
+delta_a_rew,0.26,1.29,0.73
+delta_a_pun,0.22,0.86,0.63
+delta_K,-1.17,0.02,-1.04
+delta_omega_p,-0.41,1.76,-0.36
+delta_omega_f,-1.39,2.16,-0.71

@@ -19,8 +19,12 @@ def credible_interval_table(posterior_dict):
     # get the 95% credible interval for each parameter
     credible_intervals = [np.quantile(posterior_dict[param], [0.025, 0.975]) for param in posterior_dict.keys()]
 
-    # create a dataframe
-    df = pd.DataFrame(credible_intervals, index = posterior_dict.keys(), columns = ["lower", "upper"])
+    # get maximum likelihood estimates
+    mle = [mode(posterior_dict[param]) for param in posterior_dict.keys()]
+
+
+    # create a dataframe with the credible intervals and the MLE
+    df = pd.DataFrame.from_dict({"param" : posterior_dict.keys(), "CI_low" : [x[0] for x in credible_intervals], "CI_high" : [x[1] for x in credible_intervals], "MLE" : mle})
 
     return df
 
@@ -104,7 +108,7 @@ if __name__ in "__main__":
         table = credible_interval_table(posterior_dict)
         table = table.round(2)
 
-        table.to_csv(resultspath / f"credible_intervals{file_end}.csv")
+        table.to_csv(resultspath / f"credible_intervals{file_end}.csv", index = False)
 
         # create a table with the Bayes factors
         table = bayes_factor_table(posterior_dict, prior_dict)
