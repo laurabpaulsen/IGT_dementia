@@ -6,8 +6,8 @@ import pandas as pd
 
 # local imports
 import sys
-sys.path.append(str(Path(__file__).parents[1]))
-from utils.fit_model import fit_group_level_one_group
+sys.path.append(str(Path(__file__).parents[2]))
+from utils.fit_model import fit_group_level
 
 def load_behavioural_pooled(path):
      # load data Jacus
@@ -35,26 +35,29 @@ def load_behavioural_pooled(path):
 
 
 
+
 if __name__ in "__main__":
     path = Path(__file__).parent
+    outpath = path / "fit" 
+    summary_path = path / "fit" / "param_est_HC_AD_summary_pooled.csv"
+
+    # ensure outpath exists
+    outpath.mkdir(exist_ok=True, parents=True)
 
     # load data
-    AD_data, HC_data = load_behavioural_pooled(path)
+    AD_data, HC_data = load_behavioural_pooled(path.parent)
 
-    with open(path.parent / "models" / "hierachical_IGT_ORL.stan") as f:
+    data = pd.concat([AD_data, HC_data])
+
+    with open(path.parents[1] / "models" / "hierachical_IGT_ORL_compare.stan") as f:
         model_spec = f.read()
-
-    for data, group in zip([AD_data, HC_data], ["AD", "HC"]):
-        outpath = path / "fit" / f"param_est_{group}_pooled.csv"
-        summary_path = path / "fit" / f"param_est_{group}_summary_pooled.csv"
-
     
-        summary = fit_group_level_one_group(
-            data = data,
-            model_spec = model_spec,
-            savepath = outpath,
-            summary = True
-        )
+    summary = fit_group_level(
+        data = data,
+        model_spec = model_spec,
+        savepath = outpath / "param_est_HC_AD_pooled.csv",
+        summary = True
+    )
 
-        # save summary
-        summary.to_csv(summary_path)
+    # save summary
+    summary.to_csv(outpath / "param_est_HC_AD_summary_pooled.csv")

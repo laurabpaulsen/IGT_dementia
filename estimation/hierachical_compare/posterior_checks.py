@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # local imports
 import sys
-sys.path.append(str(Path(__file__).parents[1]))
+sys.path.append(str(Path(__file__).parents[2]))
 from utils.plotting import plot_descriptive_adequacy, plot_traceplots, plot_trankplot
 from utils.helper_functions import chance_level
 from estimate_pooled import load_behavioural_pooled
@@ -20,8 +20,8 @@ def load_data_1(path):
     summary_stats = pd.read_csv(path / "fit" / "param_est_HC_AD_summary_1.csv")
     summary_stats.rename(columns = {"Unnamed: 0": "parameter"}, inplace = True)
 
-    AD_data = pd.read_csv(path / "data1" / "AD" / "data_AD_all_subjects.csv")
-    HC_data = pd.read_csv(path / "data1" / "HC" / "data_HC_all_subjects.csv")
+    AD_data = pd.read_csv(path.parent / "data1" / "AD" / "data_AD_all_subjects.csv")
+    HC_data = pd.read_csv(path.parent  / "data1" / "HC" / "data_HC_all_subjects.csv")
 
 
     return est_data, summary_stats, AD_data, HC_data
@@ -35,8 +35,8 @@ def load_data_2(path):
     summary_stats = pd.read_csv(path / "fit" / "param_est_HC_AD_summary_2.csv")
     summary_stats.rename(columns = {"Unnamed: 0": "parameter"}, inplace = True)
 
-    AD_data = pd.read_csv(path / "data2" / "alzheimer_disease.csv")
-    HC_data = pd.read_csv(path / "data2" / "healthy_controls.csv")
+    AD_data = pd.read_csv(path.parent  / "data2" / "alzheimer_disease.csv")
+    HC_data = pd.read_csv(path.parent  / "data2" / "healthy_controls.csv")
 
 
     return est_data, summary_stats, AD_data, HC_data
@@ -48,7 +48,7 @@ def load_data_3(path):
     summary_stats = pd.read_csv(path / "fit" / "param_est_HC_AD_summary_pooled.csv")
     summary_stats.rename(columns = {"Unnamed: 0": "parameter"}, inplace = True)
 
-    AD_data, HC_data = load_behavioural_pooled(path)
+    AD_data, HC_data = load_behavioural_pooled(path.parent)
 
     return est_data, summary_stats, AD_data, HC_data
 
@@ -88,8 +88,6 @@ def investigate_descriptive_adquacy(AD_data, HC_data, est_data, savepath):
         chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
         savepath = savepath
         )
-
-
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import pandas as pd
 
 # local imports
 import sys
-sys.path.append(str(Path(__file__).parents[1]))
+sys.path.append(str(Path(__file__).parents[2]))
 from utils.fit_model import fit_group_level
 
 if __name__ in "__main__":
@@ -15,8 +15,8 @@ if __name__ in "__main__":
     summary_path = path / "fit" / "param_est_HC_AD_summary_1.csv"
 
     # load data
-    AD_data = pd.read_csv(path / "data1" / "AD" / "data_AD_all_subjects.csv")
-    HC_data = pd.read_csv(path / "data1" / "HC" / "data_HC_all_subjects.csv")
+    AD_data = pd.read_csv(path.parent / "data1" / "AD" / "data_AD_all_subjects.csv")
+    HC_data = pd.read_csv(path.parent / "data1" / "HC" / "data_HC_all_subjects.csv")
     HC_data["sub"] += AD_data["sub"].max() 
 
             
@@ -25,7 +25,7 @@ if __name__ in "__main__":
 
     data = pd.concat([AD_data, HC_data])
 
-    with open(path.parent / "models" / "hierachical_IGT_ORL_compare.stan") as f:
+    with open(path.parents[1] / "models" / "hierachical_IGT_ORL_compare.stan") as f:
         model_spec = f.read()
     
     summary = fit_group_level(

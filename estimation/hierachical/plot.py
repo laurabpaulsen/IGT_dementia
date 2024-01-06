@@ -10,21 +10,15 @@ from scipy.stats import norm
 
 # local imports
 import sys
-sys.path.append(str(Path(__file__).parents[1]))
+sys.path.append(str(Path(__file__).parents[2]))
 from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy
 from utils.helper_functions import chance_level, inv_logit
-
-
 
 
 def plot_posterior_ax(ax, posterior1, posterior2, parameter_name):
  
     credible_interval1 = np.quantile(posterior1, [0.025, 0.975])
     credible_interval2 = np.quantile(posterior2, [0.025, 0.975])
-
-    print(f"{parameter_name}: {credible_interval1}")
-    print(f"{parameter_name}: {credible_interval2}")
-    print("-------------------")
     
     # only plot the credible interval for the first posterior
     sns.kdeplot(posterior1, ax = ax, color = "steelblue", fill = True, label = "Posterior", clip = (credible_interval1[0], credible_interval1[1]), alpha = 0.4, linewidth = 0.00001)
@@ -106,7 +100,6 @@ if __name__ in "__main__":
 
     parameter_names = ["$\mu A_{rew}$", "$\mu A_{pun}$", "$\mu K$", "$\mu \omega_P$", "$\mu \omega_F$"]
 
-
     plot_posterior(
             HC_posteriors, 
             AD_posteriors, 
@@ -114,22 +107,3 @@ if __name__ in "__main__":
             group_names = ["HC", "AD"], 
             savepath = outpath / f"posterior_densities_seperate.png"
     )
-
-   
-    """
-        # make a dicitonary with the parameters and the posteriors
-        posterior_dict = dict(zip(parameters, posteriors))
-        prior_dict = dict(zip(parameters, priors))
-
-        # create a table with the credible intervals
-        table = credible_interval_table(posterior_dict)
-        table = table.round(2)
-
-        table.to_csv(resultspath / f"credible_intervals{file_end}.csv", index = False)
-
-        # create a table with the Bayes factors
-        table = bayes_factor_table(posterior_dict, prior_dict)
-        #table = table.round(2)
-
-        table.to_csv(resultspath / f"bayes_factors{file_end}.csv", index = False)
-    """

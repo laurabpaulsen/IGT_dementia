@@ -2,12 +2,15 @@ import pandas as pd
 from pathlib import Path
 from statistics import mode
 import numpy as np
+import matplotlib.pyplot as plt
+
+from scipy.stats import norm
 
 # local imports
 import sys
-sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy, plot_posterior
-from utils.helper_functions import chance_level
+sys.path.append(str(Path(__file__).parents[2]))
+from utils.plotting import plot_posteriors_violin, plot_descriptive_adequacy, plot_posterior, plot_posterior_ax
+from utils.helper_functions import chance_level, inv_logit
 
 # import for kernel density estimation
 from scipy.stats import gaussian_kde
@@ -62,6 +65,7 @@ def bayes_factor_table(posterior_dict, prior_dict):
 
     return data
 
+
 if __name__ in "__main__":
     path = Path(__file__).parent
 
@@ -99,6 +103,26 @@ if __name__ in "__main__":
             parameter_names, 
             savepath = figpath
         )
+
+        # transform the posteriors to the original scale
+        #posteriors_inv = [norm.cdf(x) for x in posteriors[:3]]
+        #posteriors_inv[2] = posteriors_inv[2] *5
+
+        #posteriors_rescaled = [(x-0.5)*2 for x in posteriors_inv]
+        
+        fig, axes = plt.subplots(1, 3, figsize = (10, 5))
+
+        for ax, posterior, parameter_name in zip(axes, posteriors, parameter_names):
+            plot_posterior_ax(ax, prior, posterior, parameter_name)
+    
+        for ax in axes:
+            ax.set_xlabel("Parameter value")
+            ax.set_ylabel("Density")
+            ax.set_xlim(-1, 1)
+
+        savepath = outpath / f"posterior_densities{file_end}_scaled.png" 
+        
+        plt.savefig(savepath, dpi = 300, bbox_inches = "tight")
 
         # make a dicitonary with the parameters and the posteriors
         posterior_dict = dict(zip(parameters, posteriors))
