@@ -166,7 +166,7 @@ cython_debug/
 *.csv
 
 # but not csv files in the results folder
-!estimation/results/*.csv
+!estimation/*/results/*.csv
 
 # data files
 estimation/data2/*
