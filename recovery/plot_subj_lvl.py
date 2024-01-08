@@ -8,7 +8,7 @@ import numpy as np
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
+from utils.plotting import plot_recoveries
 from utils.helper_functions import chance_level, parse_n_subj
 
 
@@ -70,11 +70,3 @@ if __name__ == "__main__":
         parameter_names = param_names,
         savepath = fig_path / "subj_lvl_parameter_recovery_ORL.png"
     )
-
-
-    #plot_descriptive_adequacy(
-    #    choices = true_choices,
-    #    pred_choices = pred_choices,
-    #    chance_level = chance_level(100, p = 1/4, alpha = 0.05)*100,
-    #    savepath = fig_path / "subj_lvl_descriptive_ORL.png" if theta_bool else fig_path / "subj_lvl_descriptive_ORL_no_theta.png"
-    #)

@@ -9,7 +9,7 @@ from scipy.stats import norm
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
+from utils.plotting import plot_recoveries
 from utils.helper_functions import chance_level, parse_n_subj_groups
 
 
@@ -86,14 +86,6 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
 
             # check if nan, then print
             r[param_r].append(tmp_data.mean())
-        
-        # violin plots of the posteriors
-        plot_posteriors_violin(
-            posteriors = [data_rec[key][param_r] for param_r in parameters_r],
-            parameter_names = parameters_r,
-            savepath = Path(__file__).parent / "fig" / "extra" / f"{group_1}_{group_2}.png"
-        )
-
 
     return t, r
 
