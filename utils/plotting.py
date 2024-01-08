@@ -111,7 +111,7 @@ def plot_descriptive_adequacy(
 
 
 
-def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path, standardize:bool = False):
+def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path, standardize:bool = False, title = None):
     """
     Plot the recovery of the parameters.
 
@@ -132,7 +132,7 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     -------
     None
     """
-    fig, axes = plt.subplots(2, len(trues) // 2 + (len(trues) % 2 > 0), figsize = (10, 7), dpi = 300)
+    fig, axes = plt.subplots(5, figsize = (4, 14), dpi = 300)
     
     for true, estimated, parameter_name, axis in zip(trues, estimateds, parameter_names, axes.flatten()):
         if standardize:
@@ -150,6 +150,9 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     
     plt.tight_layout()
     
+    if title:
+        fig.suptitle(title)
+
     if savepath:
         plt.savefig(savepath)
 
