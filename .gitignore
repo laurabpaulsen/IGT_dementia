@@ -165,8 +165,12 @@ cython_debug/
 # csv files
 *.csv
 
+# but not csv files in the results folder
+!estimation/*/results/*.csv
+
 # data files
-estimation/data/*
+estimation/data2/*
+estimation/data1/*
 
 trash/*
 
@@ -175,3 +179,6 @@ recovery/fig/extra/*
 
 # ignore -workspace
 *.code-workspace
+
+*/old/*
+

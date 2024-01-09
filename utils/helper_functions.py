@@ -57,7 +57,7 @@ def parse_n_subj_groups():
         "--n_subj",
         "-n",
         type = int,
-        default = 20,
+        default = 40,
         help = "The number of subjects to simulate, recover or plot depending on the script."
     )
     parser.add_argument(

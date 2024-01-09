@@ -17,52 +17,75 @@ transformed data {
 parameters {
 // Declare all parameters as vectors for vectorizing
   // Hyper(group)-parameters
-  vector[6] mu; // overall mean (in both groups)
-  vector[6] delta; // the difference btween the groups
-  vector<lower=0>[6] sigma_group1;
-  vector<lower=0>[6] sigma_group2;
+  vector[5] mu; // overall mean
+  vector[5] delta; // the difference btween the groups
+
+  //group level parameters
+  vector<lower=0>[5] sigma_group1;
+  vector<lower=0>[5] sigma_group2;
+
+  // Subject-level raw parameters (for Matt trick)
+  vector[N] a_rew_pr;
+  vector[N] a_pun_pr;
+  vector[N] K_pr;
+  vector[N] omega_f_pr;
+  vector[N] omega_p_pr;
+}
 
 
+transformed parameters{
   // Subject-level parameters 
   vector<lower=0, upper=1>[N]   a_rew;
   vector<lower=0, upper=1>[N]   a_pun;
   vector<lower=0>[N]            K;
-  vector<lower=0>[N]            theta;
   vector[N]                     omega_f;
   vector[N]                     omega_p;
-}
 
-model {
-  // Hyperparameters
-  //CHANGED (truncated mu)
-  mu ~ normal(0, 1);
-  delta[1:2] ~ normal(0, 1) T[-1, 1];
-  delta[3:6] ~ normal(0, 1);
+  vector[5] mu_1; // mean parameters group 1
+  vector[5] mu_2; // mean parameters group 2
 
-  // group level parameters
-  sigma_group1 ~ gamma(.1,.1);
-  sigma_group2 ~ gamma(.1,.1);
+  mu_1 = mu - delta/2;
+  mu_2 = mu + delta/2;
 
   // modelling each parameter for each subject according to the overall mean and the difference between the groups (with a group level standard deviation)
   for(n in 1:N){
     if (group[n] == 1){ 
-      a_rew[n]    ~ normal((mu[1] - (delta[1]/2)), sigma_group1[1])T[0,1];
-      a_pun[n]    ~ normal((mu[2] - (delta[2]/2)), sigma_group1[2])T[0,1];
-      K[n]        ~ normal((mu[3] - (delta[3]/2)), sigma_group1[3])T[0, ];
-      theta[n]    ~ normal((mu[4] - (delta[4]/2)), sigma_group1[4])T[0, ];
-      omega_f[n]  ~ normal((mu[5] - (delta[5]/2)), sigma_group1[5]);
-      omega_p[n]  ~ normal((mu[6] - (delta[6]/2)), sigma_group1[6]);
+      a_rew[n]    = Phi_approx(mu_1[1] + sigma_group1[1] * a_rew_pr[n]);
+      a_pun[n]    = Phi_approx(mu_1[2] + sigma_group1[2] * a_pun_pr[n]);
+      K[n]        = Phi_approx(mu_1[3]+ sigma_group1[3] * K_pr[n])*5;
+      omega_f[n]  = mu_1[4] + sigma_group1[4] * omega_f_pr[n];
+      omega_p[n]  = mu_1[5] + sigma_group1[5] * omega_p_pr[n];
     }
-    else if (group[n] == 2){
-      a_rew[n]    ~ normal((mu[1] + (delta[1]/2)), sigma_group2[1])T[0,1];
-      a_pun[n]    ~ normal((mu[2] + (delta[2]/2)), sigma_group2[2])T[0,1];
-      K[n]        ~ normal((mu[3] + (delta[3]/2)), sigma_group2[3])T[0, ];
-      theta[n]    ~ normal((mu[4] + (delta[4]/2)), sigma_group2[4])T[0, ];
-      omega_f[n]  ~ normal((mu[5] + (delta[5]/2)), sigma_group2[5]);
-      omega_p[n]  ~ normal((mu[6] + (delta[6]/2)), sigma_group2[6]);
+    else if (group[n] == 2){ 
+      a_rew[n]    = Phi_approx(mu_2[1] + sigma_group2[1] * a_rew_pr[n]);
+      a_pun[n]    = Phi_approx(mu_2[2] + sigma_group2[2] * a_pun_pr[n]);
+      K[n]        = Phi_approx(mu_2[3]+ sigma_group2[3] * K_pr[n])*5;
+      omega_f[n]  = mu_2[4] + sigma_group2[4] * omega_f_pr[n];
+      omega_p[n]  = mu_2[5] + sigma_group2[5] * omega_p_pr[n];
     }
   }
 
+}
+
+model {
+  // Hyperparameters
+  mu ~ normal(0, 1);
+  delta ~ normal(0, 1);
+
+  // group level parameters
+  sigma_group1[1:3] ~ normal(0, 0.2);
+  sigma_group1[4:5] ~ cauchy(0, 1.0);
+
+  sigma_group2[1:3] ~ normal(0, 0.2);
+  sigma_group2[4:5] ~ cauchy(0, 1.0);
+
+
+  // individual parameters
+  a_rew_pr  ~ normal(0, 1.0);
+  a_pun_pr  ~ normal(0, 1.0);
+  K_pr     ~ normal(0, 1.0);
+  omega_f_pr ~ normal(0, 1.0);
+  omega_p_pr ~ normal(0, 1.0);
 
   for (i in 1:N) {
     // Define values
@@ -87,7 +110,7 @@ model {
 
     for (t in 1:Tsubj[i]) {
       // softmax choice
-      choice[i, t] ~ categorical( softmax(util*theta[i]));
+      choice[i, t] ~ categorical( softmax(util));
 
       // Prediction error
       PEval  = outcome[i,t] - ev[ choice[i,t]];
@@ -116,7 +139,7 @@ model {
       pers[ choice[i,t] ] = 1;   // perseverance term
       pers /= (1 + K[i]);        // decay
 
-      // Utility of expected value and perseverance times theta
+      // Utility of expected value and perseverance
       util  = ev + ef * omega_f[i] + pers * omega_p[i];
     }
   }
@@ -162,10 +185,10 @@ generated quantities {
 
       for (t in 1:Tsubj[i]) {
         // softmax choice
-        log_lik[i] += categorical_lpmf( choice[i, t] | softmax(util*theta[i]) );
+        log_lik[i] += categorical_lpmf( choice[i, t] | softmax(util) );
 
         // generate posterior prediction for current trial
-        y_pred[i,t] = categorical_rng(softmax(util*theta[i]) );
+        y_pred[i,t] = categorical_rng(softmax(util) );
 
         // Prediction error
         PEval  = outcome[i,t] - ev[ choice[i,t]];

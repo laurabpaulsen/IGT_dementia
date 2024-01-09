@@ -9,7 +9,7 @@ from scipy.stats import norm
 # local imports
 import sys
 sys.path.append(str(Path(__file__).parents[1]))
-from utils.plotting import plot_recoveries
+from utils.plotting import plot_recoveries, plot_descriptive_adequacy, plot_posteriors_violin
 from utils.helper_functions import chance_level, parse_n_subj_groups
 
 
@@ -28,7 +28,6 @@ def load_simulated(path : Path) -> dict:
             "mu_theta" : data_tmp["mu_theta"].unique()[0],
             "mu_omega_f" : data_tmp["mu_omega_f"].unique()[0],
             "mu_omega_p" : data_tmp["mu_omega_p"].unique()[0],
-
             }
 
     return data
@@ -42,28 +41,26 @@ def load_recovered(path : Path) -> dict:
         try:
             data_tmp = pd.read_csv(
                 f,
-                usecols = lambda x: x.startswith("y_pred") or x.startswith("delta") 
+                usecols = lambda x: x.startswith("y_pred") or x.startswith("mu") 
             )
         except pd.errors.EmptyDataError:
             print(f"File {f} is empty")
             continue
 
         
-        group1 = int(re.split("_", f.stem)[-2])
-        group2 = int(re.split("_", f.stem)[-1])
+        group = int(re.split("_", f.stem)[-1])
         
         # get all columns that start with y_pred
         y_pred_cols = [col for col in data_tmp.columns if col.startswith("y_pred")]
 
         data[f.stem] = {
             #"data" : data_tmp, 
-            "group1" : group1,
-            "group2" : group2,
-            "delta_a_rew" : data_tmp["delta.1"],
-            "delta_a_pun" : data_tmp["delta.2"],
-            "delta_K" : data_tmp["delta.3"],
-            "delta_omega_f" : data_tmp["delta.4"],
-            "delta_omega_p" : data_tmp["delta.5"],
+            "group" : group,
+            "mu_a_rew" : data_tmp["mu.1"],
+            "mu_a_pun" : data_tmp["mu.2"],
+            "mu_K" : data_tmp["mu.3"],
+            "mu_omega_f" : data_tmp["mu.4"],
+            "mu_omega_p" : data_tmp["mu.5"],
             "y_pred" : data_tmp[y_pred_cols]
             }
 
@@ -75,11 +72,11 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
     r = {param: [] for param in parameters_r} # recovered differences
     
     for key in data_rec.keys():
-        group_1, group_2 = data_rec[key]["group1"], data_rec[key]["group2"]
+        group = data_rec[key]["group"]
 
         # true group differences
         for param in parameters_t:
-            t[param].append(data_sim[group_2][param] - data_sim[group_1][param]) # figure out which of these is the correct one!
+            t[param].append(data_sim[group][param])
 
         for param_r in parameters_r:
             tmp_data = data_rec[key][param_r] # getting the parameter samples
@@ -93,7 +90,8 @@ def get_true_recovered(parameters_t : list, parameters_r : list, data_sim : dict
 if __name__ == "__main__":
     path = Path(__file__).parent
 
-    n_subj, n_groups = parse_n_subj_groups()
+    n_subj, n_groups = 40, 100
+    
 
     fig_path = path / "fig"
 
@@ -103,10 +101,10 @@ if __name__ == "__main__":
 
     # load the simulated and recovered data
     data_sim = load_simulated(path / "simulated" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
-    data_rec = load_recovered(path / "fit" / "group_lvl" / f"{n_groups}" / f"{n_subj}")
+    data_rec = load_recovered(path / "fit" / "group_lvl_no_compare" / f"{n_groups}" / f"{n_subj}")
 
     parameters_t = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_omega_f", "mu_omega_p"]
-    parameters_r = ["delta_a_rew", "delta_a_pun", "delta_K", "delta_omega_f", "delta_omega_p"]
+    parameters_r = ["mu_a_rew", "mu_a_pun", "mu_K", "mu_omega_f", "mu_omega_p"]
 
     # get the true and recovered parameters
     t, r = get_true_recovered(parameters_t, parameters_r, data_sim, data_rec)
@@ -115,12 +113,15 @@ if __name__ == "__main__":
     a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t = t.values()
     a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r = r.values()
 
+    # inverse probit transformation
+    a_rew_r = norm.cdf(a_rew_r)
+    a_pun_r = norm.cdf(a_pun_r)
+    K_r = norm.cdf(K_r)*5
 
     # plot the recovery of the parameters
     plot_recoveries(
         trues = [a_rew_t, a_pun_t, K_t, omega_f_t, omega_p_t,],
         estimateds = [a_rew_r, a_pun_r, K_r, omega_f_r, omega_p_r],
-        parameter_names = ["$\Delta A_{rew}$", "$\Delta A_{pun}$", "$\Delta  K$", "$\Delta  \omega_F$", "$\Delta  \omega_P$"],
-        savepath = fig_path / "hierachical_parameter_recovery_ORL.png",
-        standardize = True
+        parameter_names = ["$\mu A_{rew}$", "$\mu A_{pun}$", "$\mu  K$", "$\mu  \omega_F$", "$\mu  \omega_P$"],
+        savepath = fig_path / "hierachical_parameter_recovery_ORL_no_compare.png",
     )

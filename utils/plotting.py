@@ -2,6 +2,7 @@
 Plotting module for the project. Functions are used for both parameter recovery and parameter estimation.
 """
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 from pathlib import Path
 import numpy as np
@@ -14,12 +15,13 @@ from helper_functions import maximum_posterior_density
 colours = ["steelblue", "lightblue"]
 
 def plot_descriptive_adequacy(
-    choices, 
-    pred_choices, 
+    group1_choices,
+    group2_choices,
+    group1_pred_choices,
+    group2_pred_choices, 
     groups = None, 
     group_labels:dict = None, 
     chance_level = None, 
-    sort_accuracy = False,
     savepath: Path = None
     ):
     """
@@ -40,38 +42,48 @@ def plot_descriptive_adequacy(
     """
 
     # Calculate the correct choices per participant
-    n_sub = len(pred_choices)
-    percent_correct = []
+    percent_correct_group1 = []
+    percent_correct_group2 = []
     
-    for sub in range(n_sub):
-        correct = [choice == pred_choice for choice, pred_choice in zip(choices[sub], pred_choices[sub])]
-        sum_correct = sum(correct)
-        sum_choices = len(choices[sub])
-        percent_correct.append(sum_correct/sum_choices*100)
+    for choices, pred_choices in zip(group1_choices, group1_pred_choices):
+        percent_correct_group1.append(sum([choice == pred_choice for choice, pred_choice in zip(choices, pred_choices)]) / len(choices))
+    
+    for choices, pred_choices in zip(group2_choices, group2_pred_choices):
+        percent_correct_group2.append(sum([choice == pred_choice for choice, pred_choice in zip(choices, pred_choices)]) / len(choices))
+    
 
-    if sort_accuracy:
-        sort_inds = np.argsort(percent_correct)[::-1]
-        percent_correct = [percent_correct[ind] for ind in sort_inds]
+    percent_correct_group1 = [percent_correct*100 for percent_correct in percent_correct_group1]
+    percent_correct_group2 = [percent_correct*100 for percent_correct in percent_correct_group2]
 
-        if groups:
-            groups = [groups[ind] for ind in sort_inds]
+    fig, axes = plt.subplots(1, 2, figsize = (7, 5), dpi = 300)
 
+    # plot the descriptive adequacy
+    axes[0].bar(range(len(percent_correct_group1)), percent_correct_group1, color = colours[0], label = group_labels[0])
+    axes[0].axhline(np.mean(percent_correct_group1), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 1)
 
-    # plot the accuracy
-    fig, ax = plt.subplots(1, 1, figsize = (7, 5), dpi = 300)
+    axes[1].bar(range(len(percent_correct_group2)), percent_correct_group2, color = colours[1], label = group_labels[1])
+    axes[1].axhline(np.mean(percent_correct_group2), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 1)
+    
+    for i, ax in enumerate(axes):
+        ax.set_ylim(0, 100)
+        ax.set_xlabel("Participants")
+        ax.set_ylabel("Percent correct")
+        ax.set_title(f"{group_labels[i]}")
+        # remove the xticks
+        ax.set_xticks([])
 
-    # plot the accuracy as bar plot but color the bars according to the group
-    if groups:
-        ax.bar(range(1, n_sub + 1), percent_correct, color = [colours[group] for group in groups])
-    else:
-        ax.bar(range(1, n_sub + 1), percent_correct)
     
     # plot the chance level
     if chance_level:
-        ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 0.5)
+        for ax in axes:
+            ax.axhline(chance_level, color = "black", linestyle = "dashed", label = "Chance level", linewidth = 1)
 
-    # plot the mean accuracy
-    ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
+    for ax in axes:
+        ax.legend()
+
+
+   #for ax in axes:
+    #    ax.axhline(np.mean(percent_correct), color = "black", linestyle = "solid", label = "Mean accuracy", linewidth = 0.5)
     
     # group means
     #if groups:
@@ -82,17 +94,13 @@ def plot_descriptive_adequacy(
 
     
     # add labels for legend
-    if group_labels:
-        for group in group_labels:
-            ax.bar([0], [0], color = colours[group], label = group_labels[group])
+    #if group_labels:
+    #    for group in group_labels:
+    #        ax.bar([0], [0], color = colours[group], label = group_labels[group])
     
-    if chance_level or group_labels:
-        ax.legend()
+    #if chance_level or group_labels:
+    #    ax.legend()
 
-    ax.set_xlabel("Subject")
-    ax.set_ylabel("Accuracy [%]")
-
-    ax.set_xlim(0.5, n_sub + 0.5)
     
     plt.tight_layout()
 
@@ -103,7 +111,7 @@ def plot_descriptive_adequacy(
 
 
 
-def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path):
+def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath: Path, standardize:bool = False, title = None):
     """
     Plot the recovery of the parameters.
 
@@ -117,15 +125,23 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
         List of parameter names.
     savepath : Path
         Path to save the figure to.
+    standardize : bool, optional
+        If True, standardize the estimated parameters. The default is False.
     
     Returns
     -------
     None
     """
-    fig, axes = plt.subplots(2, len(trues) // 2 + (len(trues) % 2 > 0), figsize = (10, 7), dpi = 300)
+    fig, axes = plt.subplots(5, figsize = (4, 14), dpi = 300)
     
     for true, estimated, parameter_name, axis in zip(trues, estimateds, parameter_names, axes.flatten()):
-        plot_recovery_ax(axis, true, estimated, parameter_name)
+        if standardize:
+            # normalise in the range of the true parameter
+            estimated = (estimated - np.min(estimated)) / (np.max(estimated) - np.min(estimated)) * (np.max(true) - np.min(true)) + np.min(true)
+            y_label = "Estimated (scaled)"
+        else:
+            y_label = "Estimated"
+        plot_recovery_ax(axis, true, estimated, parameter_name, y_label)
 
     # if any of the axes is empty, remove it
     for axis in axes.flatten():
@@ -134,12 +150,15 @@ def plot_recoveries(trues:list, estimateds:list, parameter_names:list, savepath:
     
     plt.tight_layout()
     
+    if title:
+        fig.suptitle(title)
+
     if savepath:
         plt.savefig(savepath)
 
     plt.close()
 
-def plot_recovery_ax(ax, true, estimated, parameter_name):
+def plot_recovery_ax(ax, true, estimated, parameter_name, ylabel = "Estimated"):
     """
     Helper function for plot_recoveries
     """
@@ -159,7 +178,7 @@ def plot_recovery_ax(ax, true, estimated, parameter_name):
     ax.plot(lin_space, intercept + corr*lin_space, color = "steelblue", linestyle = "solid", linewidth = 0.5)
 
     ax.set_xlabel("True")
-    ax.set_ylabel("Estimated")
+    ax.set_ylabel(ylabel)
     ax.set_title(parameter_name)
 
 
@@ -312,3 +331,126 @@ def plot_compare_prior_posterior_ax(ax, prior, posterior_1, posterior_2, paramet
 
     ax.set_title(parameter_name)
 
+
+
+def plot_posterior_ax(ax, prior, posterior, parameter_name):
+    sns.kdeplot(prior, ax = ax, color = "black", linestyle = "dashed", fill = False, label = "Prior", linewidth = 1)
+    
+    credible_interval = np.quantile(posterior, [0.025, 0.975])
+    
+    # only plot the credible interval
+    sns.kdeplot(posterior, ax = ax, color = "steelblue", fill = True, label = "Posterior", clip = (credible_interval[0], credible_interval[1]), alpha = 0.4, linewidth = 0.00001)
+
+    # plot posterior with different colors for the credible interval
+    sns.kdeplot(posterior, ax = ax, color = "steelblue", fill = False, label = "Posterior", alpha = 1, linewidth = 2)
+    
+
+    ax.set_title(parameter_name)
+
+def plot_posterior(priors:list[list[float]], posteriors:list[list[float]], parameter_names:[list[str]], savepath: Path = None):
+
+    fig, axes = plt.subplots(3, 2, figsize = (9, 10), dpi = 300)
+
+    for prior, posterior, ax, param in zip(priors, posteriors, axes.flatten(), parameter_names):
+        plot_posterior_ax(ax, prior, posterior, param)
+
+
+    # dashed line for the prior, solid line for the posterior, and fill the area in between 
+    custom_lines = [plt.Line2D([0], [0], color = "black", linestyle = "dashed", lw = 1),
+                    plt.Line2D([0], [0], color = "steelblue", lw = 2),
+                    Patch(facecolor = "steelblue", alpha = 0.4)]
+
+    axes[0, 0].legend(custom_lines, ["Prior", "Posterior", "95% CI"])
+
+    # if there is an empty axis, remove it
+    for ax in axes.flatten():
+        if not ax.get_title():
+            fig.delaxes(ax)
+
+    # make legend on the last axis
+    
+    # prep stuff to put in the legend
+    
+
+
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)
+
+
+
+
+
+
+def plot_traceplots(data, parameter_names = None, savepath = None):
+
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    for i, key in enumerate(data.keys()):
+        for chain in range(n_chains):
+            axes[i].plot(data[key][chain], label = f"chain {chain+1}", linewidth = 0.5,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(data[key][chain]))
+        
+        
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+    
+    plt.tight_layout()
+    plt.legend()
+    if savepath:
+        plt.savefig(savepath)
+
+def plot_trankplot(data, parameter_names = None, savepath = None):
+    n_keys = len(data.keys())
+    n_chains = len(data[list(data.keys())[0]])
+    
+    fig, axes = plt.subplots(n_keys, 1, figsize = (10, 12), dpi = 300)
+
+    # join the chains for each parameter to get rankplot
+    for i, key in enumerate(data.keys()):
+        tmp_data = np.concatenate(data[key])
+
+        # get the indices of the sorted array
+        ranks = np.argsort(tmp_data)
+
+        # get the ranks for each chain
+        tmp_data = [ranks[i::n_chains] for i in range(n_chains)]
+
+        step_size = 10
+        # get the count of within each step
+        tmp_data = [np.array([np.sum((i <= tmp_data[chain]) & (tmp_data[chain] < i+step_size)) for i in range(0, len(tmp_data[chain]), step_size)]) for chain in range(n_chains)]
+
+    
+        # plot the rankplot
+        for chain in range(n_chains):
+            axes[i].step(np.arange(0, len(tmp_data[chain])),tmp_data[chain], label = f"chain {chain+1}", linewidth = 1,  alpha = 1)
+            
+            # set x limits  
+            axes[i].set_xlim(0, len(tmp_data[chain]))
+
+        if parameter_names:
+            axes[i].set_title(parameter_names[i])
+        else:
+            axes[i].set_title(key)
+
+    for ax in axes:
+        # set the ticks to none 
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        # get y limits
+        y_min, y_max = ax.get_ylim()
+        ax.set_ylim(-1, y_max)
+
+    plt.tight_layout()
+
+    if savepath:
+        plt.savefig(savepath)

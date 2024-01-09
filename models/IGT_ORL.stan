@@ -9,25 +9,36 @@ transformed data {
   initV  = rep_vector(0.0, 4);
 }
 parameters {
+  // Subject-level raw parameters (for Matt trick)
+  real a_rew_pr;
+  real a_pun_pr;
+  real K_pr;
+  real omega_f_pr;
+  real omega_p_pr;
+}
+
+transformed parameters{
   // Subject-level parameters (for Matt trick)
   real<lower=0, upper=1> a_rew;
   real<lower=0, upper=1> a_pun;
-  real<lower=0> K;
+  real<lower=0>          K;
   real                   omega_f;
   real                   omega_p;
-  real<lower=0>          theta;
 
+  a_rew = Phi_approx(a_rew_pr);
+  a_pun = Phi_approx(a_pun_pr);
+  K = Phi_approx(K_pr)*5;
+  omega_f = omega_f_pr;
+  omega_p = omega_p_pr;
 }
-
 
 model {
   // individual parameters
-  a_rew  ~ normal(0, 1)T[0,1];
-  a_pun  ~ normal(0, 1)T[0,1];
-  K     ~ normal(0, 1)T[0,];
-  theta ~ normal(0, 1)T[0,];
-  omega_f ~ normal(0, 1);
-  omega_p ~ normal(0, 1);
+  a_rew_pr  ~ normal(0, 1);
+  a_pun_pr  ~ normal(0, 1);
+  K_pr     ~ normal(0, 1);
+  omega_f_pr ~ normal(0, 1);
+  omega_p_pr ~ normal(0, 1);
 
 
   // Define values
@@ -49,7 +60,7 @@ model {
     ev    = initV;
     pers  = rep_vector(1, 4);
     pers /= (1 + K);
-    util = softmax(initV*theta);
+    util = softmax(initV);
     //K_tr = pow(3, K) - 1;
 
     for (t in 1:T) {
@@ -82,7 +93,7 @@ model {
       pers /= (1 + K);        // decay
 
       // Utility of expected value and perseverance
-      util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
+      util  = softmax((ev + ef * omega_f + pers * omega_p));
     }
 }
 
@@ -93,7 +104,7 @@ generated quantities {
   real log_lik;
 
   // For posterior predictive check
-  real y_pred[T];
+  array[T] real y_pred;
 
   // Set all posterior predictions to -1 (avoids NULL values)
   for (t in 1:T) {
@@ -120,7 +131,8 @@ generated quantities {
       ef    = initV;
       ev    = initV;
       pers  = initV; // initial pers values
-      util  = softmax(initV*theta);
+      util  = softmax(initV);
+      //K_tr = pow(3, K) - 1;
       log_lik = 0;
 
       for (t in 1:T) {
@@ -158,7 +170,7 @@ generated quantities {
         pers /= (1 + K);        // decay
 
         // Utility of expected value and perseverance
-        util  = softmax((ev + ef * omega_f + pers * omega_p)*theta);
+        util  = softmax((ev + ef * omega_f + pers * omega_p));
       }
     }
   }
