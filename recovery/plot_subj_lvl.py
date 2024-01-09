@@ -25,7 +25,7 @@ if __name__ == "__main__":
     n_subs = parse_n_subj()
 
 
-    parameters = ["a_rew", "a_pun", "K", "omega_p", "omega_f"]
+    parameters = ["a_rew", "a_pun", "K", "omega_f", "omega_p",]
     rec_path = path / "fit" / "subj_lvl" 
     sim_path = path / "simulated" / "subj_lvl" / f"{n_subs}" / "ORL.csv"
         
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     trues = [param_dict[f"{param}_t"] for param in parameters]
     estimateds = [param_dict[f"{param}_r"] for param in parameters]
 
-    param_names = ["$A_{rew}$", "$A_{pun}$", "$K$", "$\omega_P$", "$\omega_F$"]
+    param_names = ["$A_{rew}$", "$A_{pun}$", "$K$", "$\omega_F$", "$\omega_P$"]
 
     # plot the recovery of the parameters
     plot_recoveries(
