@@ -13,7 +13,7 @@ from utils.helper_functions import chance_level
 from estimate_pooled import load_behavioural_pooled
 
 
-def investigate_descriptive_adquacy(data, est_data, savepath):
+def investigate_descriptive_adquacy(data, est_data):
     
     pred_choices = []
     # get the predicted choices
@@ -30,19 +30,11 @@ def investigate_descriptive_adquacy(data, est_data, savepath):
     choices = []
     for sub in data["sub"].unique():
         tmp_data = data[data["sub"] == sub]
-        choices_ad.append(tmp_data["choice"].to_list())
-    
+        choices.append(tmp_data["choice"].to_list())
 
-    """plot_descriptive_adequacy( MAKE FUNCTION THAT TAKES DATA JUST FROM ONE GROUP
-        choices_ad,
-        choices_hc,
-        pred_choices_ad,
-        pred_choices_hc,
-        group_labels = ["AD", "HC"],
-        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
-        savepath = savepath
-        )
-    """
+    return choices, pred_choices
+
+
 
 def load_HC(path):
     est_data = pd.read_csv(path / "fit" / "param_est_HC_pooled.csv")
@@ -93,3 +85,20 @@ if __name__ == "__main__":
         plot_traceplots(traceplot_data, parameter_names, savepath = outpath / f"traceplot{file_ending}.png")
 
         plot_trankplot(traceplot_data, parameter_names, savepath = outpath / f"rankplot{file_ending}.png")
+
+        if file_ending == "_HC":
+            choices_hc, pred_choices_hc = investigate_descriptive_adquacy(HC_data, est_data)
+        else:
+            choices_ad, pred_choices_ad = investigate_descriptive_adquacy(AD_data, est_data)
+
+
+    plot_descriptive_adequacy(
+        choices_ad,
+        choices_hc,
+        pred_choices_ad,
+        pred_choices_hc,
+        group_labels = ["AD", "HC"],
+        chance_level = chance_level(n = 100, p = 0.25, alpha = 0.5)*100,
+        savepath = outpath / "descriptive_adequacy.png"
+        )
+    
